@@ -1,0 +1,14 @@
+{
+	"Targets": [
+		{
+			"Name": "LandmassGeneration",
+			"Path": "..\\Source\\LandmassGeneration.Target.cs",
+			"Type": "Game"
+		},
+		{
+			"Name": "LandmassGenerationEditor",
+			"Path": "..\\Source\\LandmassGenerationEditor.Target.cs",
+			"Type": "Editor"
+		}
+	]
+}
