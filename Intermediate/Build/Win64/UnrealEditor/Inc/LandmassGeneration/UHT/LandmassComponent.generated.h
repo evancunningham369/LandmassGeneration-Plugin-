@@ -19,7 +19,7 @@ private: \
 	static void StaticRegisterNativesULandmassComponent(); \
 	friend struct Z_Construct_UClass_ULandmassComponent_Statics; \
 public: \
-	DECLARE_CLASS(ULandmassComponent, UActorComponent, COMPILED_IN_FLAGS(0 | CLASS_Config), CASTCLASS_None, TEXT("/Script/LandmassGeneration"), NO_API) \
+	DECLARE_CLASS(ULandmassComponent, USceneComponent, COMPILED_IN_FLAGS(0 | CLASS_Config), CASTCLASS_None, TEXT("/Script/LandmassGeneration"), NO_API) \
 	DECLARE_SERIALIZER(ULandmassComponent)
 
 

@@ -13,7 +13,7 @@ class LANDMASSGENERATION_API ALandmass : public AActor
 	
 public:	
 	ALandmass();
-	void OnHit(const FHitResult& HitResult, float explosionRadius);
+	
 protected:
 	virtual void BeginPlay() override;
 

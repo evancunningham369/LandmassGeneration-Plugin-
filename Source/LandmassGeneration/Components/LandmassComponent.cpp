@@ -5,22 +5,26 @@
 #include "ProceduralMeshComponent.h"
 #include "DrawDebugHelpers.h"
 
-#define DRAW_POINT(Location, Color) DrawDebugPoint(GetWorld(), Location, 20.f, Color, false, 5.f)
-#define DRAW_LINE(Start, End) DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 5.f)
+#define DRAW_POINT(Location, Color) DrawDebugPoint(GetWorld(), Location, 20.f, Color, false, 5.f);
+#define DRAW_POINT_PERM(Location, Color) DrawDebugPoint(GetWorld(), Location, 20.f, Color, true, -1.f);
+#define DRAW_LINE(Start, End) DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 5.f);
+#define DRAW_LINE_PERM(Start, End) DrawDebugLine(GetWorld(), Start, End, FColor::Red, true, -1.f);
 
 ULandmassComponent::ULandmassComponent()
 {
 	ProceduralMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("Procedural Mesh"));
+	ProceduralMesh->SetupAttachment(this);
 }
 
 void ULandmassComponent::BeginPlay()
 {
 	Super::BeginPlay();	
-	UE_LOG(LogTemp, Warning, TEXT("Begin landmass"));
+
 	PopulateTerrainMap();
 	CreateMeshData();
 	PopulateVertexGrid();
 	BuildMesh();
+	UE_LOG(LogTemp, Warning, TEXT("Mesh built"))
 }
 
 void ULandmassComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -41,109 +45,55 @@ void ULandmassComponent::BuildMesh(bool bUpdateMesh)
 	ProceduralMesh->CreateMeshSection_LinearColor(0, Vertices, Triangles, Normals, UVs, VertexColors, Tangents, true) :
 	ProceduralMesh->UpdateMeshSection_LinearColor(0, Vertices, Normals, UVs, VertexColors, Tangents);
 }
-
+// Fix-me: Terrain[x][y][z] if sets a value outside of this range, overrides variables using the addresses right outside the array range
+// Populates the vertices of the terrain map
 void ULandmassComponent::PopulateTerrainMap()
 {
-	for (int32 x = 0; x < Width + 1; x++)
+	for (int32 x = 0; x < Width; x++)
 	{
 		for (int32 z = 0; z < Height; z++)
 		{
-			for (int32 y = 0; y < Width + 1; y++)
+			for (int32 y = 0; y < Width; y++)
 			{
-				float point = 0.f;
-
-				PopulateNoNoise(x, y ,z, point);
-				TerrainMap[x][y][z] = point;
+				if (z == 1)
+				{
+					TerrainMap[x][y][z] = 1.0;
+				}
+				else
+				{	
+					TerrainMap[x][y][z] = -1.0;
+				}
+				//Create hole
+				/*if (x > 4 && x < 8 && y > 4 && y < 8)
+				{
+					TerrainMap[x][y][z] = 1.0;
+				}*/
 			}
 		}
 	}
 }
-
-void ULandmassComponent::PopulateVertexGrid()
-{
-	for (const FVector& Vertex : Vertices)
-	{
-		FIntVector CellIndex = GetGridCellIndex(Vertex);
-
-		VertexGrid.FindOrAdd(CellIndex).Add(Vertex);
-	}
-	//for (const TPair<FIntVector, TArray<FVector>>& Pair : VertexGrid)
-	//{
-	//	// Access the key
-	//	const FIntVector& Key = Pair.Key;
-	//	const TArray<FVector>& Values = Pair.Value;
-
-	//	// Print the key
-	//	UE_LOG(LogTemp, Log, TEXT("Key: %s\n"), *Key.ToString());
-	//	for (const FVector& Value : Values)
-	//	{
-	//		UE_LOG(LogTemp, Log, TEXT("\tValue: %s"), *Value.ToString());
-	//	}
-	//}
-
-}
-
-FIntVector ULandmassComponent::GetGridCellIndex(const FVector& Vertex)
-{
-	/*UE_LOG(LogTemp, Warning, TEXT("Vertex rounded: %d"), FMath::FloorToInt(Vertex.X))
-	UE_LOG(LogTemp, Warning, TEXT("Vertex round with divide: %d"), FMath::FloorToInt(Vertex.X / CellSize))*/
-
-	return FIntVector(
-		FMath::FloorToInt(Vertex.X / 100),
-		FMath::FloorToInt(Vertex.Y / 100),
-		FMath::FloorToInt(Vertex.Z / 100)
-	) * -1;
-}
-
-
-void ULandmassComponent::PopulateWithPerlinNoise(int32 x, int32 y, int32 z, float& point)
-{
-	float thisHeight = FMath::PerlinNoise2D(
-		FVector2D(
-			x / divideBy * Scale + 0.001f,
-			y / divideBy * Scale + 0.001f)
-	);
-
-	// If the z value of the terrain is below ground level...
-	if (z <= thisHeight - TerrainSurface)
-	{
-		point = -1.f;
-	}// If the z value of the terrain is above ground level...
-	else if (z > thisHeight + TerrainSurface)
-	{
-		point = 1.f;
-	}
-	// else if the z value is not too high or below the ground...
-	else
-	{
-		point = FMath::Abs(z - thisHeight);
-	}
-}
-
-void ULandmassComponent::PopulateNoNoise(int32 x, int32 y, int32 z, float& point)
-{
-	point = (z <= TerrainHeight) ? -1.f : 1.f;
-}
-
+// populates the cubes of the terrain map, so number of cubes = number  of edges - 1
+//		__ __
+// EX: |__|__| - 3 edges, 2 cubes
+//		
 void ULandmassComponent::CreateMeshData()
 {
-	for (int32 x = 0; x < Width; x++)
+	for (int32 x = 0; x < Width - 1; x++)
 	{
 		for (int32 z = 0; z < Height - 1; z++)
 		{
-			for (int32 y = 0; y < Width; y++)
+			for (int32 y = 0; y < Width - 1; y++)
 			{
 				TArray<float> Cube;
 				Cube.SetNum(8);
-				// For every corner in the cube 
+				// For the first vertex
 				for (int32 i = 0; i < 8; i++)
 				{
-					// Get the corner value relative to the current base position
+					// Get the corner value relative to the current vertex position
 					FIntVector Corner = FIntVector(x, y, z) + CornerTable[i];
 
 					// Assigns a cube corner a "density" value from the terrain map(The variable point filled in by previous function)
 					Cube[i] = TerrainMap[Corner.X][Corner.Y][Corner.Z];
-					
 				}
 
 				MarchCube(FVector(x, y, z) * 100.f, Cube);
@@ -151,104 +101,21 @@ void ULandmassComponent::CreateMeshData()
 		}
 	}
 }
-
-void ULandmassComponent::RemoveMesh(const FVector& HitLocation, float Radius)
-{
-
-	UE_LOG(LogTemp, Warning, TEXT("Hit Location: %s"), *HitLocation.ToString());
-
-	FVector TopRight = HitLocation + FVector(-Radius, Radius, 0);
-	FVector BottomRight = HitLocation + FVector(-Radius, -Radius, 0);
-	FVector TopLeft = HitLocation + FVector(Radius, Radius, 0);
-	FVector BottomLeft = HitLocation + FVector(Radius, -Radius, 0);
-
-	UE_LOG(LogTemp, Warning, TEXT("TopRight Location: %s"), *TopRight.ToString());
-	UE_LOG(LogTemp, Warning, TEXT("BottomRight Location: %s"), *BottomRight.ToString());
-	UE_LOG(LogTemp, Warning, TEXT("TopLeft Location: %s"), *TopLeft.ToString());
-	UE_LOG(LogTemp, Warning, TEXT("BottomLeft Location: %s"), *BottomLeft.ToString());
-
-
-	DRAW_POINT(TopRight, FColor::Black);
-	DRAW_POINT(TopLeft, FColor::Blue);
-	DRAW_POINT(BottomLeft, FColor::Yellow);
-	DRAW_POINT(BottomRight, FColor::Purple);
-
-
-	FBox BoundingBox = FBox(BottomRight, TopLeft);
-
-	DrawDebugBox(GetWorld(), BoundingBox.GetCenter(), BoundingBox.GetExtent(), FColor::Green, false, 5.0f);
-
-	GetEffectedVectors(HitLocation, BoundingBox);
-
-	//FVector ClosestPoint = GetClosestPoint(TopLeft, BoundingBox);
-
-	/*UE_LOG(LogTemp, Warning, TEXT("Out of loop..."));
-
-	CreateMeshData();
-	BuildMesh(true);*/
-}
-
-FVector ULandmassComponent::GetClosestPoint(const FVector& point, const FBox& BoundingBox)
-{
-	FVector ClosestVertex;
-	float MinDistanceSquared = TNumericLimits<float>::Max();
-
-	for (const FVector& Vertex : Vertices)
-	{
-		float DistanceSquared = FVector::DistSquared(point, Vertex);
-		//UE_LOG(LogTemp, Warning, TEXT("%s"), IsInsideBoundingBox(point, BoundingBox) ? TEXT("True") : TEXT("False"))
-		if (BoundingBox.IsInsideXY(Vertex) && DistanceSquared < MinDistanceSquared)
-		{
-			MinDistanceSquared = DistanceSquared;
-
-			ClosestVertex = Vertex;
-		}
-	}
-	return ClosestVertex;
-}
-
-void ULandmassComponent::GetEffectedVectors(const FVector& Point, const FBox& BoundingBox)
-{
-	FIntVector QueryPoint = GetGridCellIndex(Point);
-
-	DRAW_POINT(FVector(QueryPoint), FColor::Black);
-	if (!VertexGrid.Contains(QueryPoint))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("QueryPoint %s not found in VertexGrid!"), *QueryPoint.ToString());
-		return;
-	}
-
-	for (const FVector& Vertex : VertexGrid[QueryPoint])
-	{
-		DRAW_POINT(Vertex + FVector(.5, 0 ,0), FColor::Yellow);
-		if (BoundingBox.IsInsideXY(Vertex))
-		{
-			DRAW_POINT(Vertex, FColor::Black);
-		}
-	}
-
-	/*for (const FVector& Vertex : Vertices)
-	{
-		DRAW_POINT(Vertex, FColor::Yellow);
-		if (BoundingBox.IsInsideXY(Vertex))
-		{
-			DRAW_POINT(Vertex, FColor::Black);
-		}
-	}*/
-}
-
+//
+//LogTemp: Warning: Index: 204, Position: X=0.000 Y=0.000 Z=0.000
+//LogTemp: Warning: Index: 51, Position : X =0.000 Y =0.000 Z =100.000
 void ULandmassComponent::MarchCube(FVector position, TArray<float> Cube)
 {
-	//UE_LOG(LogTemp, Warning, TEXT("%s"), *position.ToString());
-	// Converts Cube verticies into binary
+	DRAW_POINT_PERM(position, FColor::Red);
+	
+	// Converts Cube verticies into binary. Vertices inside the mesh = 1, outside = 0
 	int32 Index = GetCubeConfiguration(Cube);
-
+	
 	// Triangulation Table is only valid with indicies between (0,255)
 	if (Index == 0 || Index == 255)
 	{
 		return;
 	}
-
 	int32 edgeIndex = 0;
 
 	// for every triangle...(Never more than 5 triangles in any row of triangle table)
@@ -257,17 +124,23 @@ void ULandmassComponent::MarchCube(FVector position, TArray<float> Cube)
 		// for every point in triangle...(Never more than 3 vertices in any given triangle)
 		for (int32 p = 0; p < 3; p++)
 		{
-			// Get a vertex at that index
+			// Get an edge in the table
 			int32 indice = TriangleTable[Index][edgeIndex];
 			if (indice == -1)
 			{
 				return;
 			}
-
-			// Get the vertices of an edge for that vertex
+			
+			// Get the first vertex of the edge that is crossed
 			FVector vert1 = position + EdgeTable[indice][0];
-			FVector vert2 = position + EdgeTable[indice][1];
+			//DRAW_POINT_PERM(vert1, FColor::Yellow)
 
+			// Get the second vertex of the edge that is crossed
+			FVector vert2 = position + EdgeTable[indice][1];
+			//DRAW_POINT_PERM(vert2, FColor::Purple)
+
+
+			DRAW_LINE_PERM(vert1, vert2)
 			// Estimate the position of the vertex of intersection point
 			FVector vertPosition = (vert1 + vert2) / 2;
 
@@ -296,13 +169,138 @@ int32 ULandmassComponent::GetCubeConfiguration(TArray<float> Cube)
 	return configurationIndex;
 }
 
-void ULandmassComponent::CreateConfiguration()
+void ULandmassComponent::OnHit(const FHitResult& HitResult, float explosionRadius)
 {
-	/*ConfigIndex++;
-	UE_LOG(LogTemp, Warning, TEXT("Creating configuation %d"), ConfigIndex);
-	ClearMeshData();
-	MarchCube(FVector(0,0,5), ConfigIndex);
-	BuildMesh();*/
+	RemoveMesh(HitResult.Location, explosionRadius);
+}
+
+void ULandmassComponent::RemoveMesh(const FVector& HitLocation, float Radius)
+{
+
+	//UE_LOG(LogTemp, Warning, TEXT("Hit Location: %s"), *HitLocation.ToString());
+
+	FVector TopRight = HitLocation + FVector(-Radius, Radius, 0);
+	FVector BottomRight = HitLocation + FVector(-Radius, -Radius, 0);
+	FVector TopLeft = HitLocation + FVector(Radius, Radius, 0);
+	FVector BottomLeft = HitLocation + FVector(Radius, -Radius, 0);
+
+	/*UE_LOG(LogTemp, Warning, TEXT("TopRight Location: %s"), *TopRight.ToString());
+	UE_LOG(LogTemp, Warning, TEXT("BottomRight Location: %s"), *BottomRight.ToString());
+	UE_LOG(LogTemp, Warning, TEXT("TopLeft Location: %s"), *TopLeft.ToString());
+	UE_LOG(LogTemp, Warning, TEXT("BottomLeft Location: %s"), *BottomLeft.ToString());*/
+
+
+	DRAW_POINT(TopRight, FColor::Black);
+	DRAW_POINT(TopLeft, FColor::Blue);
+	DRAW_POINT(BottomLeft, FColor::Yellow);
+	DRAW_POINT(BottomRight, FColor::Purple);
+
+
+	FBox BoundingBox = FBox(BottomRight, TopLeft);
+
+	DrawDebugBox(GetWorld(), BoundingBox.GetCenter(), BoundingBox.GetExtent(), FColor::Green, true, -1.f);
+	//UE_LOG(LogTemp, Warning, TEXT("Cell Size: %f"), GridCellSize)
+	DrawDebugBox(GetWorld(), HitLocation, FVector(GridCellSize / 2.f, GridCellSize / 2.f, 0.f), FColor::Green, true, -1.0f);
+
+	TArray<FVector> EffectedVectors = GetEffectedVectors(HitLocation, BoundingBox);
+	
+	for (FVector& Vertex : Vertices)
+	{
+		if (EffectedVectors.Contains(Vertex))
+		{
+			Vertex.Z = 0;
+		}
+	}
+	BuildMesh(true);
+}
+
+// Searches surrounding grid cells to collect all vertices within the explosion radius
+TArray<FVector> ULandmassComponent::GetEffectedVectors(const FVector& Point, const FBox& BoundingBox)
+{
+	TArray<FVector> Vectors;
+	FIntVector QueryPoint = GetGridCellIndex(Point);
+	UE_LOG(LogTemp, Warning, TEXT("Query Point: %s"), *QueryPoint.ToString())
+	
+	for(int32 x = -1; x < 2; x++)
+	{
+		for (int32 y = -1; y < 2; y++)
+		{
+			FIntVector GridCell = QueryPoint + FIntVector(x, y, 0);
+			if (VertexGrid.Contains(GridCell))
+			{
+				for (const FVector& Vertex : VertexGrid[GridCell])
+				{
+					if (BoundingBox.IsInsideXY(Vertex) && Vertex.Z != 0.0)
+					{
+						// Draw point over vertex inside bounding box
+						DRAW_POINT(Vertex, FColor::Black);
+						Vectors.Add(Vertex);
+					}
+				}
+			}
+		}
+	}
+	return Vectors;
+}
+
+// Populates the Grid with cells and vertices within each cell
+void ULandmassComponent::PopulateVertexGrid()
+{
+	for (const FVector& Vertex : Vertices)
+	{
+		FIntVector CellIndex = GetGridCellIndex(Vertex);
+
+		if (!VertexGrid.FindOrAdd(CellIndex).Contains(Vertex))
+		{
+			VertexGrid.FindOrAdd(CellIndex).Add(Vertex);
+		}
+	}
+
+	// print to visualize the grid and their respective vertices
+	//PrintVertexGrid();
+
+}
+
+// Returns the grid cell index of the given vertex
+FIntVector ULandmassComponent::GetGridCellIndex(const FVector& Vertex)
+{
+	/*UE_LOG(LogTemp, Warning, TEXT("Vertex rounded: %d"), FMath::FloorToInt(Vertex.X))
+	UE_LOG(LogTemp, Warning, TEXT("Vertex round with divide: %d"), FMath::FloorToInt(Vertex.X / GridCellSize))*/
+
+	return FIntVector(
+		FMath::FloorToInt(Vertex.X / GridCellSize),
+		FMath::FloorToInt(Vertex.Y / GridCellSize),
+		FMath::FloorToInt(Vertex.Z / GridCellSize)
+	) * 1;
+}
+
+
+
+// Helper functions
+void ULandmassComponent::PrintVertexGrid()
+{
+	for (const TPair<FIntVector, TArray<FVector>>& Pair : VertexGrid)
+	{
+		// Access the key
+		const FIntVector& Key = Pair.Key;
+		const TArray<FVector>& Values = Pair.Value;
+
+		// Print the key
+		UE_LOG(LogTemp, Log, TEXT("\nKey: %s\n"), *Key.ToString());
+		// Print all values for that key
+		for (const FVector& Value : Values)
+		{
+			UE_LOG(LogTemp, Log, TEXT("\tValue: %s\n"), *Value.ToString());
+		}
+	}
+}
+
+void ULandmassComponent::PrintVectors(const TArray<FVector>& Vectors)
+{
+	for (const FVector& Vector : Vectors)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("%s"), *Vector.ToString())
+	}
 }
 
 void ULandmassComponent::TestMarchCube(FVector position, int32 Index)

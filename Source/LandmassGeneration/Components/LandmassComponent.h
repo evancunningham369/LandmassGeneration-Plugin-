@@ -3,11 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Components/ActorComponent.h"
+#include "Components/SceneComponent.h"
 #include "LandmassComponent.generated.h"
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class LANDMASSGENERATION_API ULandmassComponent : public UActorComponent
+class LANDMASSGENERATION_API ULandmassComponent : public USceneComponent
 {
 	GENERATED_BODY()
 
@@ -319,28 +319,22 @@ public:
 
 	TMap<FIntVector, TArray<FVector>> VertexGrid;
 
-	UPROPERTY(EditAnywhere)
 	float TerrainSurface = 0.f;
-	float TerrainHeight = 5.f;
+
 	const int32 Width = 32;
-	const int32 Height = 8;
+	const int32 Height = 2;
+
+	float TerrainMap[32][32][2];
 
 	UPROPERTY(EditAnywhere)
-	float divideBy = 16.f;
-
-	UPROPERTY(EditAnywhere)
-	float Scale = 1.5f;
-
-	float TerrainMap[32][32][8];
+	float GridCellSize = 300.f;
 
 	int32 ConfigIndex = 0;
 
 	UPROPERTY(EditAnywhere)
 	bool bUsePerlinNoise = false;
 
-	FVector GetClosestPoint(const FVector& point, const FBox& BoundingBox);
-
-	void GetEffectedVectors(const FVector& Point, const FBox& BoundingBox);
+	TArray<FVector> GetEffectedVectors(const FVector& Point, const FBox& BoundingBox);
 
 	void PopulateTerrainMap();
 
@@ -348,21 +342,16 @@ public:
 
 	FIntVector GetGridCellIndex(const FVector& Vertex);
 
-	float CellSize = 100.f;
-
-	void PopulateWithPerlinNoise(int32 x, int32 y, int32 z, float& point);
-
-	void PopulateNoNoise(int32 x, int32 y, int32 z, float& point);
-
-	void CreateConfiguration();
-
 	void MarchCube(FVector position, TArray<float> Cube);
 	void TestMarchCube(FVector position, int32 Index);
 	int32 GetCubeConfiguration(TArray<float> Cube);
+	void OnHit(const FHitResult& HitResult, float explosionRadius);
 	void ClearMeshData();
 
 	void CreateMeshData();
 
+	void PrintVertexGrid();
+	void PrintVectors(const TArray<FVector>& Vectors);
 	void RemoveMesh(const FVector& HitLocation, float Radius);
 
 	void BuildMesh(bool bUpdateMesh = false);

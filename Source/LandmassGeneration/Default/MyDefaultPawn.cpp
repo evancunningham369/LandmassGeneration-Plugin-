@@ -6,7 +6,7 @@
 #include "EnhancedInputComponent.h"
 #include "DrawDebugHelpers.h"
 #include <Kismet/GameplayStatics.h>
-#include "LandmassGeneration/Landmass/Landmass.h"
+#include "LandmassGeneration/Components/LandmassComponent.h"
 
 
 AMyDefaultPawn::AMyDefaultPawn()
@@ -56,9 +56,9 @@ void AMyDefaultPawn::Click(const FInputActionValue& Value)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Hit"));
 
-		if (ALandmass* Landmass = Cast<ALandmass>(HitResult.GetActor()))
+		if (ULandmassComponent* LandmassComponent = Cast<ULandmassComponent>(HitResult.GetActor()->FindComponentByClass<ULandmassComponent>()))
 		{
-			Landmass->OnHit(HitResult, ExplosionRadius);
+			LandmassComponent->OnHit(HitResult, ExplosionRadius);
 		}
 	}
 }

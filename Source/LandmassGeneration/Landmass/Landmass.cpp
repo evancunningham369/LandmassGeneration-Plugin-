@@ -8,7 +8,11 @@
 ALandmass::ALandmass()
 {
 	PrimaryActorTick.bCanEverTick = true;
+
+	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
+
 	LandmassComponent = CreateDefaultSubobject<ULandmassComponent>(TEXT("Landmass Component"));
+	LandmassComponent->SetupAttachment(RootComponent);
 }
 
 void ALandmass::BeginPlay()
@@ -16,17 +20,6 @@ void ALandmass::BeginPlay()
 	Super::BeginPlay();
 
 	SetActorLocation(FVector(0.f, 0.f, 0.f));
-}
-
-void ALandmass::OnHit(const FHitResult& HitResult, float explosionRadius)
-{
-	FVector HitLocation = HitResult.Location;
-	if (LandmassComponent)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Landmass Component is valid"));
-
-		LandmassComponent->RemoveMesh(HitLocation, explosionRadius);
-	}
 }
 
 void ALandmass::Tick(float DeltaTime)

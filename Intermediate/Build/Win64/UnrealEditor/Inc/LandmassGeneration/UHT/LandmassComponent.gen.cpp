@@ -10,7 +10,7 @@ PRAGMA_DISABLE_DEPRECATION_WARNINGS
 void EmptyLinkFunctionForGeneratedCodeLandmassComponent() {}
 
 // Begin Cross Module References
-ENGINE_API UClass* Z_Construct_UClass_UActorComponent();
+ENGINE_API UClass* Z_Construct_UClass_USceneComponent();
 LANDMASSGENERATION_API UClass* Z_Construct_UClass_ULandmassComponent();
 LANDMASSGENERATION_API UClass* Z_Construct_UClass_ULandmassComponent_NoRegister();
 PROCEDURALMESHCOMPONENT_API UClass* Z_Construct_UClass_UProceduralMeshComponent_NoRegister();
@@ -32,6 +32,7 @@ struct Z_Construct_UClass_ULandmassComponent_Statics
 	static constexpr UECodeGen_Private::FMetaDataPairParam Class_MetaDataParams[] = {
 		{ "BlueprintSpawnableComponent", "" },
 		{ "ClassGroupNames", "Custom" },
+		{ "HideCategories", "Trigger PhysicsVolume" },
 		{ "IncludePath", "Components/LandmassComponent.h" },
 		{ "ModuleRelativePath", "Components/LandmassComponent.h" },
 	};
@@ -40,15 +41,7 @@ struct Z_Construct_UClass_ULandmassComponent_Statics
 		{ "EditInline", "true" },
 		{ "ModuleRelativePath", "Components/LandmassComponent.h" },
 	};
-	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_TerrainSurface_MetaData[] = {
-		{ "Category", "LandmassComponent" },
-		{ "ModuleRelativePath", "Components/LandmassComponent.h" },
-	};
-	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_divideBy_MetaData[] = {
-		{ "Category", "LandmassComponent" },
-		{ "ModuleRelativePath", "Components/LandmassComponent.h" },
-	};
-	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_Scale_MetaData[] = {
+	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_GridCellSize_MetaData[] = {
 		{ "Category", "LandmassComponent" },
 		{ "ModuleRelativePath", "Components/LandmassComponent.h" },
 	};
@@ -58,9 +51,7 @@ struct Z_Construct_UClass_ULandmassComponent_Statics
 	};
 #endif // WITH_METADATA
 	static const UECodeGen_Private::FObjectPropertyParams NewProp_ProceduralMesh;
-	static const UECodeGen_Private::FFloatPropertyParams NewProp_TerrainSurface;
-	static const UECodeGen_Private::FFloatPropertyParams NewProp_divideBy;
-	static const UECodeGen_Private::FFloatPropertyParams NewProp_Scale;
+	static const UECodeGen_Private::FFloatPropertyParams NewProp_GridCellSize;
 	static void NewProp_bUsePerlinNoise_SetBit(void* Obj);
 	static const UECodeGen_Private::FBoolPropertyParams NewProp_bUsePerlinNoise;
 	static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
@@ -71,9 +62,7 @@ struct Z_Construct_UClass_ULandmassComponent_Statics
 	static const UECodeGen_Private::FClassParams ClassParams;
 };
 const UECodeGen_Private::FObjectPropertyParams Z_Construct_UClass_ULandmassComponent_Statics::NewProp_ProceduralMesh = { "ProceduralMesh", nullptr, (EPropertyFlags)0x00100000000a0009, UECodeGen_Private::EPropertyGenFlags::Object, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(ULandmassComponent, ProceduralMesh), Z_Construct_UClass_UProceduralMeshComponent_NoRegister, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_ProceduralMesh_MetaData), NewProp_ProceduralMesh_MetaData) };
-const UECodeGen_Private::FFloatPropertyParams Z_Construct_UClass_ULandmassComponent_Statics::NewProp_TerrainSurface = { "TerrainSurface", nullptr, (EPropertyFlags)0x0010000000000001, UECodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(ULandmassComponent, TerrainSurface), METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_TerrainSurface_MetaData), NewProp_TerrainSurface_MetaData) };
-const UECodeGen_Private::FFloatPropertyParams Z_Construct_UClass_ULandmassComponent_Statics::NewProp_divideBy = { "divideBy", nullptr, (EPropertyFlags)0x0010000000000001, UECodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(ULandmassComponent, divideBy), METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_divideBy_MetaData), NewProp_divideBy_MetaData) };
-const UECodeGen_Private::FFloatPropertyParams Z_Construct_UClass_ULandmassComponent_Statics::NewProp_Scale = { "Scale", nullptr, (EPropertyFlags)0x0010000000000001, UECodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(ULandmassComponent, Scale), METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_Scale_MetaData), NewProp_Scale_MetaData) };
+const UECodeGen_Private::FFloatPropertyParams Z_Construct_UClass_ULandmassComponent_Statics::NewProp_GridCellSize = { "GridCellSize", nullptr, (EPropertyFlags)0x0010000000000001, UECodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(ULandmassComponent, GridCellSize), METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_GridCellSize_MetaData), NewProp_GridCellSize_MetaData) };
 void Z_Construct_UClass_ULandmassComponent_Statics::NewProp_bUsePerlinNoise_SetBit(void* Obj)
 {
 	((ULandmassComponent*)Obj)->bUsePerlinNoise = 1;
@@ -81,14 +70,12 @@ void Z_Construct_UClass_ULandmassComponent_Statics::NewProp_bUsePerlinNoise_SetB
 const UECodeGen_Private::FBoolPropertyParams Z_Construct_UClass_ULandmassComponent_Statics::NewProp_bUsePerlinNoise = { "bUsePerlinNoise", nullptr, (EPropertyFlags)0x0010000000000001, UECodeGen_Private::EPropertyGenFlags::Bool | UECodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, sizeof(bool), sizeof(ULandmassComponent), &Z_Construct_UClass_ULandmassComponent_Statics::NewProp_bUsePerlinNoise_SetBit, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_bUsePerlinNoise_MetaData), NewProp_bUsePerlinNoise_MetaData) };
 const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UClass_ULandmassComponent_Statics::PropPointers[] = {
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ULandmassComponent_Statics::NewProp_ProceduralMesh,
-	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ULandmassComponent_Statics::NewProp_TerrainSurface,
-	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ULandmassComponent_Statics::NewProp_divideBy,
-	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ULandmassComponent_Statics::NewProp_Scale,
+	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ULandmassComponent_Statics::NewProp_GridCellSize,
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ULandmassComponent_Statics::NewProp_bUsePerlinNoise,
 };
 static_assert(UE_ARRAY_COUNT(Z_Construct_UClass_ULandmassComponent_Statics::PropPointers) < 2048);
 UObject* (*const Z_Construct_UClass_ULandmassComponent_Statics::DependentSingletons[])() = {
-	(UObject* (*)())Z_Construct_UClass_UActorComponent,
+	(UObject* (*)())Z_Construct_UClass_USceneComponent,
 	(UObject* (*)())Z_Construct_UPackage__Script_LandmassGeneration,
 };
 static_assert(UE_ARRAY_COUNT(Z_Construct_UClass_ULandmassComponent_Statics::DependentSingletons) < 16);
@@ -127,10 +114,10 @@ ULandmassComponent::~ULandmassComponent() {}
 struct Z_CompiledInDeferFile_FID_Users_donut_Documents_LandmassGenerationUnreal_LandmassGeneration_Source_LandmassGeneration_Components_LandmassComponent_h_Statics
 {
 	static constexpr FClassRegisterCompiledInInfo ClassInfo[] = {
-		{ Z_Construct_UClass_ULandmassComponent, ULandmassComponent::StaticClass, TEXT("ULandmassComponent"), &Z_Registration_Info_UClass_ULandmassComponent, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(ULandmassComponent), 1680876741U) },
+		{ Z_Construct_UClass_ULandmassComponent, ULandmassComponent::StaticClass, TEXT("ULandmassComponent"), &Z_Registration_Info_UClass_ULandmassComponent, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(ULandmassComponent), 2969223747U) },
 	};
 };
-static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_Users_donut_Documents_LandmassGenerationUnreal_LandmassGeneration_Source_LandmassGeneration_Components_LandmassComponent_h_554761229(TEXT("/Script/LandmassGeneration"),
+static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_Users_donut_Documents_LandmassGenerationUnreal_LandmassGeneration_Source_LandmassGeneration_Components_LandmassComponent_h_3684838887(TEXT("/Script/LandmassGeneration"),
 	Z_CompiledInDeferFile_FID_Users_donut_Documents_LandmassGenerationUnreal_LandmassGeneration_Source_LandmassGeneration_Components_LandmassComponent_h_Statics::ClassInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_Users_donut_Documents_LandmassGenerationUnreal_LandmassGeneration_Source_LandmassGeneration_Components_LandmassComponent_h_Statics::ClassInfo),
 	nullptr, 0,
 	nullptr, 0);
