@@ -9,17 +9,13 @@ ALandmass::ALandmass()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
-
 	LandmassComponent = CreateDefaultSubobject<ULandmassComponent>(TEXT("Landmass Component"));
-	LandmassComponent->SetupAttachment(RootComponent);
+	SetRootComponent(LandmassComponent);
 }
 
 void ALandmass::BeginPlay()
 {
 	Super::BeginPlay();
-
-	SetActorLocation(FVector(0.f, 0.f, 0.f));
 }
 
 void ALandmass::Tick(float DeltaTime)

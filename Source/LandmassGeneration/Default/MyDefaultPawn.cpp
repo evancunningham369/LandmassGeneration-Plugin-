@@ -7,6 +7,7 @@
 #include "DrawDebugHelpers.h"
 #include <Kismet/GameplayStatics.h>
 #include "LandmassGeneration/Components/LandmassComponent.h"
+#include "LandmassGeneration/Landmass/Landmass.h"
 
 
 AMyDefaultPawn::AMyDefaultPawn()
@@ -56,10 +57,33 @@ void AMyDefaultPawn::Click(const FInputActionValue& Value)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Hit"));
 
-		if (ULandmassComponent* LandmassComponent = Cast<ULandmassComponent>(HitResult.GetActor()->FindComponentByClass<ULandmassComponent>()))
+		FVector BoxExtent(ExplosionRadius, ExplosionRadius, 0);
+		FCollisionShape BoxShape = FCollisionShape::MakeBox(BoxExtent);
+
+
+		TArray<FHitResult> HitResults;
+
+		if (GetWorld()->SweepMultiByChannel(
+			HitResults,
+			HitResult.ImpactPoint,
+			HitResult.ImpactPoint,
+			FQuat::Identity,
+			ECollisionChannel::ECC_Visibility,
+			BoxShape
+		))
 		{
-			LandmassComponent->OnHit(HitResult, ExplosionRadius);
+			for (const FHitResult& Hit : HitResults)
+			{
+				if (ALandmass* Landmass = Cast<ALandmass>(Hit.GetActor()))
+				{
+					if (Landmass->GetLandmassComponent())
+					{
+						Landmass->GetLandmassComponent()->OnHit(Hit, ExplosionRadius);
+					}
+				}
+			}
 		}
+		DrawDebugBox(GetWorld(), HitResult.ImpactPoint, BoxExtent, FQuat::Identity, FColor::Red, false, 2.0f);
 	}
 }
 

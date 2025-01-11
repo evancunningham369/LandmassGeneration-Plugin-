@@ -23,4 +23,5 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	class ULandmassComponent* LandmassComponent;
 
+	FORCEINLINE ULandmassComponent* GetLandmassComponent() const { return LandmassComponent; }
 };

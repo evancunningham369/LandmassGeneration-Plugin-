@@ -11,6 +11,8 @@
     <None Include="..\..\Source\LandmassGenerationEditor.Target.cs">
       <Filter>Source</Filter>
     </None>
+    <None Include="..\..\.gitattributes" />
+    <None Include="..\..\.gitignore" />
     <None Include="..\..\.vsconfig" />
     <Filter Include="Config">
       <UniqueIdentifier>{FA535FFB-25E1-3D20-B416-52F9BE21E06E}</UniqueIdentifier>
@@ -74,6 +76,21 @@
     </ClCompile>
     <ClCompile Include="..\..\Source\LandmassGeneration\Landmass\Landmass.h">
       <Filter>Source\LandmassGeneration\Landmass</Filter>
+    </ClCompile>
+    <Filter Include="Source\LandmassGeneration\Manager">
+      <UniqueIdentifier>{1B4BE1B2-5208-3340-A098-D05F4DDBD7AD}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\LandmassGeneration\Manager\LandmassManager.cpp">
+      <Filter>Source\LandmassGeneration\Manager</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\LandmassGeneration\Manager\LandmassManager.h">
+      <Filter>Source\LandmassGeneration\Manager</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\LandmassGeneration\Manager\LandmassManagerWrapper.cpp">
+      <Filter>Source\LandmassGeneration\Manager</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\LandmassGeneration\Manager\LandmassManagerWrapper.h">
+      <Filter>Source\LandmassGeneration\Manager</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

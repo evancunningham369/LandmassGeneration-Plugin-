@@ -4,6 +4,7 @@
 #include "LandmassComponent.h"
 #include "ProceduralMeshComponent.h"
 #include "DrawDebugHelpers.h"
+#include "LandmassGeneration/Manager/LandmassManager.h"
 
 #define DRAW_POINT(Location, Color) DrawDebugPoint(GetWorld(), Location, 20.f, Color, false, 5.f);
 #define DRAW_POINT_PERM(Location, Color) DrawDebugPoint(GetWorld(), Location, 20.f, Color, true, -1.f);
@@ -19,7 +20,7 @@ ULandmassComponent::ULandmassComponent()
 void ULandmassComponent::BeginPlay()
 {
 	Super::BeginPlay();	
-
+	DRAW_POINT_PERM(GetComponentLocation(), FColor::Green)
 	PopulateTerrainMap();
 	CreateMeshData();
 	PopulateVertexGrid();
@@ -35,7 +36,6 @@ void ULandmassComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 
 void ULandmassComponent::BuildMesh(bool bUpdateMesh)
 {
-
 	TArray<FVector>Normals;
 	TArray<FVector2D> UVs;
 	TArray<FLinearColor> VertexColors;
@@ -78,6 +78,8 @@ void ULandmassComponent::PopulateTerrainMap()
 //		
 void ULandmassComponent::CreateMeshData()
 {
+	TArray<FIntVector> CornerTable = ULandmassManager::Get()->GetCornerTable();
+
 	for (int32 x = 0; x < Width - 1; x++)
 	{
 		for (int32 z = 0; z < Height - 1; z++)
@@ -96,18 +98,16 @@ void ULandmassComponent::CreateMeshData()
 					Cube[i] = TerrainMap[Corner.X][Corner.Y][Corner.Z];
 				}
 
-				MarchCube(FVector(x, y, z) * 100.f, Cube);
+				MarchCube((FVector(x, y, z) * 100.f) + GetComponentLocation(), Cube);
 			}
 		}
 	}
 }
-//
-//LogTemp: Warning: Index: 204, Position: X=0.000 Y=0.000 Z=0.000
-//LogTemp: Warning: Index: 51, Position : X =0.000 Y =0.000 Z =100.000
+
 void ULandmassComponent::MarchCube(FVector position, TArray<float> Cube)
 {
-	DRAW_POINT_PERM(position, FColor::Red);
-	
+	TArray<TArray<int32>> TriangleTable = ULandmassManager::Get()->GetTriangulationTable();
+	TArray<TArray<FVector>> EdgeTable = ULandmassManager::Get()->GetEdgeTable();
 	// Converts Cube verticies into binary. Vertices inside the mesh = 1, outside = 0
 	int32 Index = GetCubeConfiguration(Cube);
 	
@@ -139,8 +139,6 @@ void ULandmassComponent::MarchCube(FVector position, TArray<float> Cube)
 			FVector vert2 = position + EdgeTable[indice][1];
 			//DRAW_POINT_PERM(vert2, FColor::Purple)
 
-
-			DRAW_LINE_PERM(vert1, vert2)
 			// Estimate the position of the vertex of intersection point
 			FVector vertPosition = (vert1 + vert2) / 2;
 
@@ -177,7 +175,7 @@ void ULandmassComponent::OnHit(const FHitResult& HitResult, float explosionRadiu
 void ULandmassComponent::RemoveMesh(const FVector& HitLocation, float Radius)
 {
 
-	//UE_LOG(LogTemp, Warning, TEXT("Hit Location: %s"), *HitLocation.ToString());
+	UE_LOG(LogTemp, Warning, TEXT("Hit Location: %s"), *HitLocation.ToString());
 
 	FVector TopRight = HitLocation + FVector(-Radius, Radius, 0);
 	FVector BottomRight = HitLocation + FVector(-Radius, -Radius, 0);
@@ -203,7 +201,7 @@ void ULandmassComponent::RemoveMesh(const FVector& HitLocation, float Radius)
 	DrawDebugBox(GetWorld(), HitLocation, FVector(GridCellSize / 2.f, GridCellSize / 2.f, 0.f), FColor::Green, true, -1.0f);
 
 	TArray<FVector> EffectedVectors = GetEffectedVectors(HitLocation, BoundingBox);
-	
+
 	for (FVector& Vertex : Vertices)
 	{
 		if (EffectedVectors.Contains(Vertex))
@@ -220,7 +218,8 @@ TArray<FVector> ULandmassComponent::GetEffectedVectors(const FVector& Point, con
 	TArray<FVector> Vectors;
 	FIntVector QueryPoint = GetGridCellIndex(Point);
 	UE_LOG(LogTemp, Warning, TEXT("Query Point: %s"), *QueryPoint.ToString())
-	
+
+	// Check hitlocation grid cell and surrounding grid cells for effected vectors
 	for(int32 x = -1; x < 2; x++)
 	{
 		for (int32 y = -1; y < 2; y++)
@@ -266,15 +265,13 @@ FIntVector ULandmassComponent::GetGridCellIndex(const FVector& Vertex)
 {
 	/*UE_LOG(LogTemp, Warning, TEXT("Vertex rounded: %d"), FMath::FloorToInt(Vertex.X))
 	UE_LOG(LogTemp, Warning, TEXT("Vertex round with divide: %d"), FMath::FloorToInt(Vertex.X / GridCellSize))*/
-
+	
 	return FIntVector(
 		FMath::FloorToInt(Vertex.X / GridCellSize),
 		FMath::FloorToInt(Vertex.Y / GridCellSize),
 		FMath::FloorToInt(Vertex.Z / GridCellSize)
 	) * 1;
 }
-
-
 
 // Helper functions
 void ULandmassComponent::PrintVertexGrid()
@@ -299,47 +296,47 @@ void ULandmassComponent::PrintVectors(const TArray<FVector>& Vectors)
 {
 	for (const FVector& Vector : Vectors)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("%s"), *Vector.ToString())
+		DRAW_POINT_PERM(Vector, FColor::Red)
 	}
 }
 
-void ULandmassComponent::TestMarchCube(FVector position, int32 Index)
-{
-	if (Index == 0 || Index == 255)
-	{
-		return;
-	}
-	int32 edgeIndex = 0;
-	// for every triangle...(Never more than 5 triangles in any row of triangle table)
-	for (int32 i = 0; i < 5; i++)
-	{
-		// for every point in triangle...(Never more than 3 vertices in any given triangle)
-		for (int32 p = 0; p < 3; p++)
-		{	
-			// Get the vertex at that index
-			int32 indice = TriangleTable[Index][edgeIndex];
-			UE_LOG(LogTemp, Warning, TEXT("indice: %d"), indice)
-			if (indice == -1)
-			{
-				return;
-			}
-			// Get the vertices for that edge
-			FVector vert1 = position + EdgeTable[indice][0];
-			FVector vert2 = position + EdgeTable[indice][1];
-
-			// Position of vertex where mesh intersects edge
-			FVector vertPosition = (vert1 + vert2) / 2;
-
-			//Add position of vertex where mesh intersects
-			Vertices.Add(vertPosition);
-
-			//Add index of last added vertex
-			Triangles.Add(Vertices.Num() - 1);
-			edgeIndex++;
-		}
-		UE_LOG(LogTemp, Warning, TEXT("Vertices: %d"), Triangles.Num());
-	}
-}
+//void ULandmassComponent::TestMarchCube(FVector position, int32 Index)
+//{
+//	if (Index == 0 || Index == 255)
+//	{
+//		return;
+//	}
+//	int32 edgeIndex = 0;
+//	// for every triangle...(Never more than 5 triangles in any row of triangle table)
+//	for (int32 i = 0; i < 5; i++)
+//	{
+//		// for every point in triangle...(Never more than 3 vertices in any given triangle)
+//		for (int32 p = 0; p < 3; p++)
+//		{	
+//			// Get the vertex at that index
+//			int32 indice = TriangleTable[Index][edgeIndex];
+//			UE_LOG(LogTemp, Warning, TEXT("indice: %d"), indice)
+//			if (indice == -1)
+//			{
+//				return;
+//			}
+//			// Get the vertices for that edge
+//			FVector vert1 = position + EdgeTable[indice][0];
+//			FVector vert2 = position + EdgeTable[indice][1];
+//
+//			// Position of vertex where mesh intersects edge
+//			FVector vertPosition = (vert1 + vert2) / 2;
+//
+//			//Add position of vertex where mesh intersects
+//			Vertices.Add(vertPosition);
+//
+//			//Add index of last added vertex
+//			Triangles.Add(Vertices.Num() - 1);
+//			edgeIndex++;
+//		}
+//		UE_LOG(LogTemp, Warning, TEXT("Vertices: %d"), Triangles.Num());
+//	}
+//}
 
 void ULandmassComponent::ClearMeshData()
 {
