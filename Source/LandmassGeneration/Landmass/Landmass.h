@@ -13,7 +13,7 @@ class LANDMASSGENERATION_API ALandmass : public AActor
 	
 public:	
 	ALandmass();
-	
+	virtual void BeginDestroy() override;
 protected:
 	virtual void BeginPlay() override;
 
@@ -23,5 +23,5 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	class ULandmassComponent* LandmassComponent;
 
-	FORCEINLINE ULandmassComponent* GetLandmassComponent() const { return LandmassComponent; }
+	ULandmassComponent* GetLandmassComponent();
 };

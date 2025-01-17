@@ -30,7 +30,7 @@ public:
 	float EndDistance = 50000.f;
 
 	UPROPERTY(EditAnywhere)
-	float ExplosionRadius = 500.f;
+	float ExplosionRadius = 200.f;
 
 protected:
 	virtual void BeginPlay() override;
@@ -38,8 +38,8 @@ private:
 
 	void Click(const FInputActionValue& Value);
 
-	void TraceUnderCrosshairs(FHitResult& HitResult);
-
+	void TraceUnderCrosshairs();
+	void CalculateHit(const FHitResult& HitResult, const FVector& Direction);
 	void DrawSphere(FVector Location, FColor Color);
 	void DrawLine(FVector Start, FVector End);
 };

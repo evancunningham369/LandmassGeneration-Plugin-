@@ -18,7 +18,7 @@ AMyDefaultPawn::AMyDefaultPawn()
 void AMyDefaultPawn::BeginPlay()
 {
 	Super::BeginPlay();
-	UE_LOG(LogTemp, Warning, TEXT("Begin Play"))
+	//UE_LOG(LogTemp, Warning, TEXT("Begin Play"))
 
 	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
 	{
@@ -49,45 +49,10 @@ void AMyDefaultPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 void AMyDefaultPawn::Click(const FInputActionValue& Value)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Click"));
-
-	FHitResult HitResult;
-	TraceUnderCrosshairs(HitResult);
-	if (HitResult.bBlockingHit)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Hit"));
-
-		FVector BoxExtent(ExplosionRadius, ExplosionRadius, 0);
-		FCollisionShape BoxShape = FCollisionShape::MakeBox(BoxExtent);
-
-
-		TArray<FHitResult> HitResults;
-
-		if (GetWorld()->SweepMultiByChannel(
-			HitResults,
-			HitResult.ImpactPoint,
-			HitResult.ImpactPoint,
-			FQuat::Identity,
-			ECollisionChannel::ECC_Visibility,
-			BoxShape
-		))
-		{
-			for (const FHitResult& Hit : HitResults)
-			{
-				if (ALandmass* Landmass = Cast<ALandmass>(Hit.GetActor()))
-				{
-					if (Landmass->GetLandmassComponent())
-					{
-						Landmass->GetLandmassComponent()->OnHit(Hit, ExplosionRadius);
-					}
-				}
-			}
-		}
-		DrawDebugBox(GetWorld(), HitResult.ImpactPoint, BoxExtent, FQuat::Identity, FColor::Red, false, 2.0f);
-	}
+	TraceUnderCrosshairs();
 }
 
-void AMyDefaultPawn::TraceUnderCrosshairs(FHitResult& HitResult)
+void AMyDefaultPawn::TraceUnderCrosshairs()
 {
 	FVector2D ViewportSize;
 	GEngine->GameViewport->GetViewportSize(ViewportSize);
@@ -107,7 +72,7 @@ void AMyDefaultPawn::TraceUnderCrosshairs(FHitResult& HitResult)
 		FVector Start = CrosshairWorldPosition;
 
 		FVector End = Start + CrosshairWorldDirection * EndDistance;
-		DrawLine(Start, End);
+		FHitResult HitResult;
 
 		GetWorld()->LineTraceSingleByChannel(
 			HitResult,
@@ -119,11 +84,42 @@ void AMyDefaultPawn::TraceUnderCrosshairs(FHitResult& HitResult)
 		if (HitResult.bBlockingHit)
 		{
 			DrawSphere(HitResult.ImpactPoint, FColor::Black);
+			CalculateHit(HitResult, CrosshairWorldDirection.GetSafeNormal());
 		}
 		else
 		{
 			HitResult.ImpactPoint = End;
 			DrawSphere(End, FColor::Blue);
+		}
+	}
+}
+
+void AMyDefaultPawn::CalculateHit(const FHitResult& HitResult, const FVector& Direction)
+{
+	FVector BoxExtent(ExplosionRadius, ExplosionRadius, 0);
+	FCollisionShape BoxShape = FCollisionShape::MakeBox(BoxExtent);
+
+
+	TArray<FHitResult> HitResults;
+
+	if (GetWorld()->SweepMultiByChannel(
+		HitResults,
+		HitResult.ImpactPoint,
+		HitResult.ImpactPoint,
+		FQuat::Identity,
+		ECollisionChannel::ECC_Visibility,
+		BoxShape
+	))
+	{
+		for (const FHitResult& Hit : HitResults)
+		{
+			if (ALandmass* Landmass = Cast<ALandmass>(Hit.GetActor()))
+			{
+				if (Landmass->GetLandmassComponent())
+				{
+					Landmass->GetLandmassComponent()->RemoveMesh(Hit, ExplosionRadius, Direction);
+				}
+			}
 		}
 	}
 }
@@ -137,7 +133,7 @@ void AMyDefaultPawn::DrawSphere(FVector Location, FColor Color)
 		12,
 		Color,
 		false,
-		5.f
+		1.f
 	);
 }
 
@@ -149,6 +145,6 @@ void AMyDefaultPawn::DrawLine(FVector Start, FVector End)
 		End,
 		FColor::Red,
 		false,
-		5.f
+		1.f
 	);
 }

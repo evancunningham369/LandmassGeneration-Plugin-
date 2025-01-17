@@ -77,6 +77,9 @@
     <ClCompile Include="..\..\Source\LandmassGeneration\Landmass\Landmass.h">
       <Filter>Source\LandmassGeneration\Landmass</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\LandmassGeneration\Landmass\LandmassTypes.h">
+      <Filter>Source\LandmassGeneration\Landmass</Filter>
+    </ClCompile>
     <Filter Include="Source\LandmassGeneration\Manager">
       <UniqueIdentifier>{1B4BE1B2-5208-3340-A098-D05F4DDBD7AD}</UniqueIdentifier>
     </Filter>
