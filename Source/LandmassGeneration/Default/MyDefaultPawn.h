@@ -40,6 +40,4 @@ private:
 
 	void TraceUnderCrosshairs();
 	void CalculateHit(const FHitResult& HitResult, const FVector& Direction);
-	void DrawSphere(FVector Location, FColor Color);
-	void DrawLine(FVector Start, FVector End);
 };

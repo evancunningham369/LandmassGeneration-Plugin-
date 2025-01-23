@@ -32,6 +32,9 @@
     <Filter Include="Source\LandmassGeneration">
       <UniqueIdentifier>{22589C02-39DC-3482-A025-D57E04329D4C}</UniqueIdentifier>
     </Filter>
+    <ClCompile Include="..\..\Source\LandmassGeneration\DebugMacros.h">
+      <Filter>Source\LandmassGeneration</Filter>
+    </ClCompile>
     <None Include="..\..\Source\LandmassGeneration\LandmassGeneration.Build.cs">
       <Filter>Source\LandmassGeneration</Filter>
     </None>

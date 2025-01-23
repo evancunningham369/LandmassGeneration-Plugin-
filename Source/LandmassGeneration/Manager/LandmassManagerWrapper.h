@@ -14,11 +14,11 @@ class LANDMASSGENERATION_API ALandmassManagerWrapper : public AActor
 public:	
 	ALandmassManagerWrapper();
 
-	float SpawnOffset = 2900.f;
+	float SpawnOffset = 100.f;
 
-	int32 NumOfChunksX = 2;
+	int32 NumOfChunksX = 50;
 
-	int32 NumOfChunksY = 3;
+	int32 NumOfChunksY = 50;
 
 protected:
 	virtual void BeginPlay() override;

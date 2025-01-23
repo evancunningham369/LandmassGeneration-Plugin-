@@ -4,11 +4,11 @@
 #include "MyDefaultPawn.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
-#include "DrawDebugHelpers.h"
 #include <Kismet/GameplayStatics.h>
 #include "LandmassGeneration/Components/LandmassComponent.h"
 #include "LandmassGeneration/Landmass/Landmass.h"
-
+#include "LandmassGeneration/Manager/LandmassManager.h"
+#include "LandmassGeneration/DebugMacros.h"
 
 AMyDefaultPawn::AMyDefaultPawn()
 {
@@ -83,13 +83,11 @@ void AMyDefaultPawn::TraceUnderCrosshairs()
 
 		if (HitResult.bBlockingHit)
 		{
-			DrawSphere(HitResult.ImpactPoint, FColor::Black);
 			CalculateHit(HitResult, CrosshairWorldDirection.GetSafeNormal());
 		}
 		else
 		{
 			HitResult.ImpactPoint = End;
-			DrawSphere(End, FColor::Blue);
 		}
 	}
 }
@@ -111,40 +109,6 @@ void AMyDefaultPawn::CalculateHit(const FHitResult& HitResult, const FVector& Di
 		BoxShape
 	))
 	{
-		for (const FHitResult& Hit : HitResults)
-		{
-			if (ALandmass* Landmass = Cast<ALandmass>(Hit.GetActor()))
-			{
-				if (Landmass->GetLandmassComponent())
-				{
-					Landmass->GetLandmassComponent()->RemoveMesh(Hit, ExplosionRadius, Direction);
-				}
-			}
-		}
+		ULandmassManager::Get()->DeformLandmasses(HitResults, ExplosionRadius, Direction);
 	}
-}
-
-void AMyDefaultPawn::DrawSphere(FVector Location, FColor Color)
-{
-	DrawDebugSphere(
-		GetWorld(),
-		Location,
-		20.f,
-		12,
-		Color,
-		false,
-		1.f
-	);
-}
-
-void AMyDefaultPawn::DrawLine(FVector Start, FVector End)
-{
-	DrawDebugLine(
-		GetWorld(),
-		Start,
-		End,
-		FColor::Red,
-		false,
-		1.f
-	);
 }

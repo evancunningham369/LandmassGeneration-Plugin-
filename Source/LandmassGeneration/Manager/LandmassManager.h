@@ -18,34 +18,18 @@ public:
 	static ULandmassManager* Get();
 
 	void SpawnChunks(UWorld* World, float SpawnOffset, int32 NumOfChunksX, int32 NumOfChunksY);
-	void SpawnTopRow(UWorld* World, float SpawnOffset, int32 NumOfChunksX, int32 NumOfChunksY);
-	void SpawnMiddleRow(UWorld* World, float SpawnOffset, int32 NumOfChunksX, int32 NumOfChunksY);
-	void SpawnBottomRow(UWorld* World, float SpawnOffset, int32 NumOfChunksX);
-
-	void CreateTopLeftChunk(float (&TerrainMap)[32][32][8]);
-	void CreateTopEdgeChunk(float(&TerrainMap)[32][32][8]);
-	void CreateTopRightChunk(float(&TerrainMap)[32][32][8]);
-
-	void CreateLeftEdgeChunk(float(&TerrainMap)[32][32][8]);
-	void CreateMiddleChunk(float(&TerrainMap)[32][32][8]);
-	void CreateRightEdgeChunk(float(&TerrainMap)[32][32][8]);
-
-	void CreateBottomLeftChunk(float(&TerrainMap)[32][32][8]);
-	void CreateBottomEdgeChunk(float(&TerrainMap)[32][32][8]);
-	void CreateBottomRightChunk(float(&TerrainMap)[32][32][8]);
 
 	const TArray<TArray<int32>>& GetTriangulationTable() const { return TriangleTable; }
 	const TArray<TArray<FVector>>& GetEdgeTable() const { return EdgeTable; }
 	const TArray<FIntVector>& GetCornerTable() const { return CornerTable; }
+	void DeformLandmasses(const TArray<FHitResult>& HitResults, float ExplosionRadius, FVector Direction);
 private:
 
 	FVector SpawnLocation{ 0, 0, 0 };
 
-	int32 TerrainWidth = 32;
-	int32 TerrainHeight = 8;
-
 	ULandmassManager();
 	void InitializeSharedData();
+
 
 	static ULandmassManager* Instance;
 

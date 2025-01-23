@@ -13,7 +13,6 @@ class LANDMASSGENERATION_API ALandmass : public AActor
 	
 public:	
 	ALandmass();
-	virtual void BeginDestroy() override;
 protected:
 	virtual void BeginPlay() override;
 

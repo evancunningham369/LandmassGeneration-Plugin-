@@ -4,7 +4,6 @@
 #include "LandmassManager.h"
 #include "LandmassGeneration/Landmass/Landmass.h"
 #include "LandmassGeneration/Components/LandmassComponent.h"
-#include "DrawDebugHelpers.h"
 
 ULandmassManager* ULandmassManager::Instance = nullptr;
 
@@ -26,300 +25,27 @@ void ULandmassManager::SpawnChunks(UWorld* World, float SpawnOffset, int32 NumOf
 		for (int32 y = 0; y < NumOfChunksY; y++)
 		{
 			FVector Offset = FVector(x, y, 0) * SpawnOffset;
-			ALandmass* Landmass = World->SpawnActor<ALandmass>(ALandmass::StaticClass(), FVector(0,0,0), FRotator::ZeroRotator);
-			Landmass->GetLandmassComponent()->InitializeLandmassOffsets(Offset);
-		}
-	}
-
-	/*SpawnBottomRow(World, SpawnOffset, NumOfChunksX);
-	
-
-	for (int32 y = 1; y < NumOfChunksY - 1; y++)
-	{
-		SpawnMiddleRow(World, SpawnOffset, NumOfChunksX, y);
-	}
-
-	SpawnTopRow(World, SpawnOffset, NumOfChunksX, NumOfChunksY);*/
-
-	UE_LOG(LogTemp, Warning, TEXT("Landmasses Spawned"));
-
-	/*ALandmass* Landmass = World->SpawnActor<ALandmass>(ALandmass::StaticClass(), FVector(0,0,0), FRotator::ZeroRotator);
-	Landmass->GetLandmassComponent()->SetLandmassType(ELandmassType::ELMT_BottomLeft);
-	Landmass->GetLandmassComponent()->InitializeLandmassOffsets(FVector(3100,0,0));*/
-
-}
-
-// FIX-ME: Offsets are (0,0,0), (31,0,0), (62,0,0). Need to make sure these offsets are not cauing out of bounds errors.
-// FIX: C-style arrays define the dimensions AND the indices. 
-// So Terrain[32][32][8] only has valid indices from 0 to 31, 0 to 7.
-void ULandmassManager::SpawnBottomRow(UWorld* World, float SpawnOffset, int32 NumOfChunksX)
-{
-	for (int32 x = 0; x < NumOfChunksX; x++)
-	{
-		FVector Offset(x * SpawnOffset, 0, 0);
-
-		ALandmass* Landmass = World->SpawnActor<ALandmass>(ALandmass::StaticClass(), SpawnLocation, FRotator::ZeroRotator);
-
-		if (x == 0)
-		{
-			Landmass->GetLandmassComponent()->SetLandmassType(ELandmassType::ELMT_BottomRight);
-			Landmass->GetLandmassComponent()->InitializeLandmassOffsets(Offset);
-		}
-		else if (x == NumOfChunksX - 1)
-		{
-			Landmass->GetLandmassComponent()->SetLandmassType(ELandmassType::ELMT_BottomLeft);
-			Landmass->GetLandmassComponent()->InitializeLandmassOffsets(Offset);
-		}
-		else
-		{
-			Landmass->GetLandmassComponent()->SetLandmassType(ELandmassType::ELMT_BottomEdge);
+			ALandmass* Landmass = World->SpawnActor<ALandmass>(ALandmass::StaticClass(), Offset, FRotator::ZeroRotator);
 			Landmass->GetLandmassComponent()->InitializeLandmassOffsets(Offset);
 		}
 	}
 }
 
-void ULandmassManager::SpawnMiddleRow(UWorld* World, float SpawnOffset, int32 NumOfChunksX, int32 ColumnIndex)
+void ULandmassManager::DeformLandmasses(const TArray<FHitResult>& HitResults, float ExplosionRadius, FVector Direction)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Column Index: %d"), ColumnIndex)
-	for (int32 x = 0; x < NumOfChunksX; x++)
-	{
-		FVector Offset(x * SpawnOffset, SpawnOffset * ColumnIndex, 0);
 
-		ALandmass* Landmass = World->SpawnActor<ALandmass>(ALandmass::StaticClass(), SpawnLocation, FRotator::ZeroRotator);
-
-		if (x == 0)
+	ParallelFor(HitResults.Num(), [&](int32 LandmassIndex)
 		{
-			Landmass->GetLandmassComponent()->SetLandmassType(ELandmassType::ELMT_RightEdge);
-			Landmass->GetLandmassComponent()->InitializeLandmassOffsets(Offset);
+			const FHitResult& Hit = HitResults[LandmassIndex];
 
-		}
-		else if (x == NumOfChunksX - 1)
-		{
-			Landmass->GetLandmassComponent()->SetLandmassType(ELandmassType::ELMT_LeftEdge);
-			Landmass->GetLandmassComponent()->InitializeLandmassOffsets(Offset);
-
-		}
-		else
-		{
-			Landmass->GetLandmassComponent()->SetLandmassType(ELandmassType::ELMT_Middle);
-			Landmass->GetLandmassComponent()->InitializeLandmassOffsets(Offset);
-		}
-	}
-}
-
-void ULandmassManager::SpawnTopRow(UWorld* World, float SpawnOffset, int32 NumOfChunksX, int32 NumOfChunksY)
-{
-	for (int32 x = 0; x < NumOfChunksX; x++)
-	{
-		FVector Offset(x * SpawnOffset, (NumOfChunksY - 1) * SpawnOffset, 0);
-
-		ALandmass* Landmass = World->SpawnActor<ALandmass>(ALandmass::StaticClass(), SpawnLocation, FRotator::ZeroRotator);
-
-		if (x == 0)
-		{
-			Landmass->GetLandmassComponent()->SetLandmassType(ELandmassType::ELMT_TopRight);
-			Landmass->GetLandmassComponent()->InitializeLandmassOffsets(Offset);
-		}
-		else if (x == NumOfChunksX - 1)
-		{
-			Landmass->GetLandmassComponent()->SetLandmassType(ELandmassType::ELMT_TopLeft);
-			Landmass->GetLandmassComponent()->InitializeLandmassOffsets(Offset);
-		}
-		else
-		{
-			Landmass->GetLandmassComponent()->SetLandmassType(ELandmassType::ELMT_TopEdge);
-			Landmass->GetLandmassComponent()->InitializeLandmassOffsets(Offset);
-		}
-	}
-}
-
-void ULandmassManager::CreateTopLeftChunk(float(&TerrainMap)[32][32][8])
-{
-	for (int32 x = 0; x < TerrainWidth; x++)
-	{
-		for (int32 z = 0; z < TerrainHeight; z++)
-		{
-			for (int32 y = 0; y < TerrainWidth; y++)
+			if (ALandmass* Landmass = Cast<ALandmass>(Hit.GetActor()))
 			{
-				if (x == TerrainWidth - 1 || y == TerrainWidth - 1 || z == TerrainHeight - 1)
+				if (Landmass->GetLandmassComponent())
 				{
-					TerrainMap[x][y][z] = 1.0;
-				}
-				else
-				{
-					TerrainMap[x][y][z] = -1.0;
+					Landmass->GetLandmassComponent()->RemoveMesh(Hit, ExplosionRadius, Direction);
 				}
 			}
-		}
-	}
-}
-
-void ULandmassManager::CreateTopEdgeChunk(float(&TerrainMap)[32][32][8])
-{
-	for (int32 x = 0; x < TerrainWidth; x++)
-	{
-		for (int32 z = 0; z < TerrainHeight; z++)
-		{
-			for (int32 y = 0; y < TerrainWidth; y++)
-			{
-				if (y == TerrainWidth - 1 || z == TerrainHeight - 1)
-				{
-					TerrainMap[x][y][z] = 1.0;
-				}
-				else
-				{
-					TerrainMap[x][y][z] = -1.0;
-				}
-			}
-		}
-	}
-}
-
-void ULandmassManager::CreateTopRightChunk(float(&TerrainMap)[32][32][8])
-{
-	for (int32 x = 0; x < TerrainWidth; x++)
-	{
-		for (int32 z = 0; z < TerrainHeight; z++)
-		{
-			for (int32 y = 0; y < TerrainWidth; y++)
-			{
-				if (x == 0 || y == TerrainWidth - 1 || z == TerrainHeight - 1)
-				{
-					TerrainMap[x][y][z] = 1.0;
-				}
-				else
-				{
-					TerrainMap[x][y][z] = -1.0;
-				}
-			}
-		}
-	}
-}
-
-void ULandmassManager::CreateLeftEdgeChunk(float(&TerrainMap)[32][32][8])
-{
-	for (int32 x = 0; x < TerrainWidth; x++)
-	{
-		for (int32 z = 0; z < TerrainHeight; z++)
-		{
-			for (int32 y = 0; y < TerrainWidth; y++)
-			{
-				if (x == TerrainWidth - 1 ||  z == TerrainHeight - 1)
-				{
-					TerrainMap[x][y][z] = 1.0;
-				}
-				else
-				{
-					TerrainMap[x][y][z] = -1.0;
-				}
-			}
-		}
-	}
-}
-
-void ULandmassManager::CreateMiddleChunk(float(&TerrainMap)[32][32][8])
-{
-	for (int32 x = 0; x < TerrainWidth; x++)
-	{
-		for (int32 z = 0; z < TerrainHeight; z++)
-		{
-			for (int32 y = 0; y < TerrainWidth; y++)
-			{
-				if (z == TerrainHeight - 1)
-				{
-					TerrainMap[x][y][z] = 1.0;
-				}
-				else
-				{
-					TerrainMap[x][y][z] = -1.0;
-				}
-			}
-		}
-	}
-}
-
-void ULandmassManager::CreateRightEdgeChunk(float(&TerrainMap)[32][32][8])
-{
-	for (int32 x = 0; x < TerrainWidth; x++)
-	{
-		for (int32 z = 0; z < TerrainHeight; z++)
-		{
-			for (int32 y = 0; y < TerrainWidth; y++)
-			{
-				if (x == 0 || z == TerrainHeight - 1)
-				{
-					TerrainMap[x][y][z] = 1.0;
-				}
-				else
-				{
-					TerrainMap[x][y][z] = -1.0;
-				}
-			}
-		}
-	}
-}
-
-void ULandmassManager::CreateBottomLeftChunk(float(&TerrainMap)[32][32][8])
-{
-	for (int32 x = 0; x < TerrainWidth; x++)
-	{
-		for (int32 z = 0; z < TerrainHeight; z++)
-		{
-			for (int32 y = 0; y < TerrainWidth; y++)
-			{
-				if (x == TerrainWidth - 1 || y == 0 || z == TerrainHeight - 1)
-				{
-					TerrainMap[x][y][z] = 1.0;
-				}
-				else
-				{
-					TerrainMap[x][y][z] = -1.0;
-				}
-			}
-		}
-	}
-}
-
-void ULandmassManager::CreateBottomEdgeChunk(float(&TerrainMap)[32][32][8])
-{
-	for (int32 x = 0; x < TerrainWidth; x++)
-	{
-		for (int32 z = 0; z < TerrainHeight; z++)
-		{
-			for (int32 y = 0; y < TerrainWidth; y++)
-			{
-				if (y == 0 || z == TerrainHeight - 1)
-				{
-					TerrainMap[x][y][z] = 1.0;
-				}
-				else
-				{
-					TerrainMap[x][y][z] = -1.0;
-				}
-			}
-		}
-	}
-}
-
-void ULandmassManager::CreateBottomRightChunk(float(&TerrainMap)[32][32][8])
-{
-	for (int32 x = 0; x < TerrainWidth; x++)
-	{
-		for (int32 z = 0; z < TerrainHeight; z++)
-		{
-			for (int32 y = 0; y < TerrainWidth; y++)
-			{
-				if (x == 0 || y == 0 || z == TerrainHeight - 1)
-				{
-					TerrainMap[x][y][z] = 1.0;
-				}
-				else
-				{
-					TerrainMap[x][y][z] = -1.0;
-				}
-			}
-		}
-	}
+		});
 }
 
 ULandmassManager::ULandmassManager()
