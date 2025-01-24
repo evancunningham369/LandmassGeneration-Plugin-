@@ -17,12 +17,10 @@ class LANDMASSGENERATION_API ULandmassManager : public UObject
 public:
 	static ULandmassManager* Get();
 
-	void SpawnChunks(UWorld* World, float SpawnOffset, int32 NumOfChunksX, int32 NumOfChunksY);
-
 	const TArray<TArray<int32>>& GetTriangulationTable() const { return TriangleTable; }
 	const TArray<TArray<FVector>>& GetEdgeTable() const { return EdgeTable; }
 	const TArray<FIntVector>& GetCornerTable() const { return CornerTable; }
-	void DeformLandmasses(const TArray<FHitResult>& HitResults, float ExplosionRadius, FVector Direction);
+
 private:
 
 	FVector SpawnLocation{ 0, 0, 0 };

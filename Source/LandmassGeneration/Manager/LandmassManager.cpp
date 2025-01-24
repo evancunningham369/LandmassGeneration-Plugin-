@@ -18,36 +18,6 @@ ULandmassManager* ULandmassManager::Get()
 	return Instance;
 }
 
-void ULandmassManager::SpawnChunks(UWorld* World, float SpawnOffset, int32 NumOfChunksX, int32 NumOfChunksY)
-{
-	for (int32 x = 0; x < NumOfChunksX; x++)
-	{
-		for (int32 y = 0; y < NumOfChunksY; y++)
-		{
-			FVector Offset = FVector(x, y, 0) * SpawnOffset;
-			ALandmass* Landmass = World->SpawnActor<ALandmass>(ALandmass::StaticClass(), Offset, FRotator::ZeroRotator);
-			Landmass->GetLandmassComponent()->InitializeLandmassOffsets(Offset);
-		}
-	}
-}
-
-void ULandmassManager::DeformLandmasses(const TArray<FHitResult>& HitResults, float ExplosionRadius, FVector Direction)
-{
-
-	ParallelFor(HitResults.Num(), [&](int32 LandmassIndex)
-		{
-			const FHitResult& Hit = HitResults[LandmassIndex];
-
-			if (ALandmass* Landmass = Cast<ALandmass>(Hit.GetActor()))
-			{
-				if (Landmass->GetLandmassComponent())
-				{
-					Landmass->GetLandmassComponent()->RemoveMesh(Hit, ExplosionRadius, Direction);
-				}
-			}
-		});
-}
-
 ULandmassManager::ULandmassManager()
 {
 	// Implement if needed

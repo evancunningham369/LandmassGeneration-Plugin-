@@ -6,6 +6,7 @@
 #define DRAW_POINT_PERM(Location, Color) DrawDebugPoint(GetWorld(), Location, 20.f, Color, true, -1.f);
 #define DRAW_LINE(Start, End) DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 5.f);
 #define DRAW_LINE_PERM(Start, End) DrawDebugLine(GetWorld(), Start, End, FColor::Red, true, -1.f);
+#define DRAW_LINE_COLOR_PERM(Start, End, Color) DrawDebugLine(GetWorld(), Start, End, Color, true, -1.f);
 #define DRAW_SPHERE(Location, Color) DrawDebugSphere(GetWorld(), Location, 20.f, 12, Color, false, 1.f);
 #define DRAW_SPHERE_PERM(Location, Color) DrawDebugSphere(GetWorld(), Location, 20.f, 12, Color, true, -1.f);
 #define DRAW_SPHERE_SIZE(Location, Radius, Color) DrawDebugSphere(GetWorld(), Location, Radius, 12, Color, false, 1.f);

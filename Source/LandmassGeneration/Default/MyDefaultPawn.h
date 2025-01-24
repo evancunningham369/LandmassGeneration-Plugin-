@@ -27,7 +27,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	UPROPERTY(EditAnywhere)
-	float EndDistance = 50000.f;
+	float EndDistance = 20000.f;
 
 	UPROPERTY(EditAnywhere)
 	float ExplosionRadius = 200.f;
@@ -39,5 +39,4 @@ private:
 	void Click(const FInputActionValue& Value);
 
 	void TraceUnderCrosshairs();
-	void CalculateHit(const FHitResult& HitResult, const FVector& Direction);
 };

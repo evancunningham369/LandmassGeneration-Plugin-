@@ -9,6 +9,7 @@
 #include "LandmassGeneration/Landmass/Landmass.h"
 #include "LandmassGeneration/Manager/LandmassManager.h"
 #include "LandmassGeneration/DebugMacros.h"
+#include "LandmassGeneration/Manager/LandmassManagerWrapper.h"
 
 AMyDefaultPawn::AMyDefaultPawn()
 {
@@ -83,32 +84,18 @@ void AMyDefaultPawn::TraceUnderCrosshairs()
 
 		if (HitResult.bBlockingHit)
 		{
-			CalculateHit(HitResult, CrosshairWorldDirection.GetSafeNormal());
+			DRAW_LINE(Start, HitResult.ImpactPoint);
+			DRAW_SPHERE(HitResult.ImpactPoint, FColor::Black);
+			if (ALandmassManagerWrapper* LandmassManagerWrapper = Cast<ALandmassManagerWrapper>(HitResult.GetActor()))
+			{
+				LandmassManagerWrapper->ReCreateMesh(HitResult.Location);
+			}
 		}
 		else
 		{
+			DRAW_LINE(Start, End);
+			DRAW_SPHERE(End, FColor::Black);
 			HitResult.ImpactPoint = End;
 		}
-	}
-}
-
-void AMyDefaultPawn::CalculateHit(const FHitResult& HitResult, const FVector& Direction)
-{
-	FVector BoxExtent(ExplosionRadius, ExplosionRadius, 0);
-	FCollisionShape BoxShape = FCollisionShape::MakeBox(BoxExtent);
-
-
-	TArray<FHitResult> HitResults;
-
-	if (GetWorld()->SweepMultiByChannel(
-		HitResults,
-		HitResult.ImpactPoint,
-		HitResult.ImpactPoint,
-		FQuat::Identity,
-		ECollisionChannel::ECC_Visibility,
-		BoxShape
-	))
-	{
-		ULandmassManager::Get()->DeformLandmasses(HitResults, ExplosionRadius, Direction);
 	}
 }
