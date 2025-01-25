@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/SceneComponent.h"
 #include "LandmassGeneration/Landmass/LandmassTypes.h"
+#include "Components/DynamicMeshComponent.h"
 #include "LandmassComponent.generated.h"
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -17,6 +18,11 @@ public:
 
 	UPROPERTY(VisibleAnywhere)
 	class UProceduralMeshComponent* ProceduralMesh;
+
+	UPROPERTY(VisibleAnywhere)
+	UDynamicMeshComponent* DynamicMesh;
+
+	FDynamicMesh3 Mesh;
 
 	TArray<FVector> Vertices;
 	TArray<int32> Triangles;

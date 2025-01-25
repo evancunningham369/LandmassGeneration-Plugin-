@@ -5,11 +5,18 @@
 #include "ProceduralMeshComponent.h"
 #include "LandmassGeneration/Manager/LandmassManager.h"
 #include "LandmassGeneration/DebugMacros.h"
+#include "DynamicMesh/DynamicMesh3.h"
 
 ULandmassComponent::ULandmassComponent()
 {
 	ProceduralMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("Procedural Mesh"));
 	ProceduralMesh->SetupAttachment(this);
+	DynamicMesh = CreateDefaultSubobject<UDynamicMeshComponent>(TEXT("Dynamic Mesh"));
+
+	DynamicMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	DynamicMesh->SetCollisionResponseToAllChannels(ECR_Block);
+	DynamicMesh->SetComplexAsSimpleCollisionEnabled(true);
+
 }
 
 void ULandmassComponent::BeginPlay()
@@ -21,27 +28,14 @@ void ULandmassComponent::BeginPlay()
 	TerrainMap.SetNum(Width * Width * Height);
 
 	PopulateTerrainMap();
-	CreateMeshData();
-	BuildMesh();
+	Mesh.EnableVertexUVs(FVector2f::Zero());
+	Mesh.EnableVertexNormals(FVector3f(0, 0, 1));
 }
 
 void ULandmassComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-}
-
-void ULandmassComponent::BuildMesh()
-{
-	TArray<FVector>Normals;
-	TArray<FVector2D> UVs;
-	TArray<FLinearColor> VertexColors;
-	TArray<FProcMeshTangent> Tangents;
-	AsyncTask(ENamedThreads::GameThread, [this, Normals, UVs, VertexColors, Tangents]()
-		{
-			ProceduralMesh->CreateMeshSection_LinearColor(0, Vertices, Triangles, Normals, UVs, VertexColors, Tangents, true);
-		}
-	);
 }
 
 // Fix-me: Terrain[x][y][z] if sets a value outside of this range, overrides variables using the addresses right outside the array range
@@ -96,6 +90,7 @@ void ULandmassComponent::CreateMeshData()
 			}
 		}
 	}
+	DynamicMesh->SetMesh(MoveTemp(Mesh));
 }
 
 void ULandmassComponent::MarchCube(FVector position, TArray<float> Cube)
@@ -115,6 +110,8 @@ void ULandmassComponent::MarchCube(FVector position, TArray<float> Cube)
 	// for every triangle...(Never more than 5 triangles in any row of triangle table)
 	for (int32 i = 0; i < 5; i++)
 	{
+		//FIndex3i TriangleIndices;
+
 		// for every point in triangle...(Never more than 3 vertices in any given triangle)
 		for (int32 p = 0; p < 3; p++)
 		{
@@ -142,12 +139,15 @@ void ULandmassComponent::MarchCube(FVector position, TArray<float> Cube)
 			//FVector vertPosition = (vert1 + vert2) / 2;
 
 			//Add position of vertex intersection point
-			Vertices.Add(VertexPosition);
+			int32 VertexIndex = Mesh.AppendVertex(VertexPosition);
+			//TriangleIndices[p] = VertexIndex;
 
 			////Add number of triangles for this cube
 			Triangles.Add(Vertices.Num() - 1);
 			edgeIndex++;
 		}
+
+		//Mesh.AppendTriangle(FIndex3i(TriangleIndices[0], TriangleIndices[2], TriangleIndices[3]))
 	}
 }
 
@@ -215,7 +215,6 @@ void ULandmassComponent::ReCreateMesh(const FVector& WorldHitLocation, const FVe
 		}
 	}
 	CreateMeshData();
-	BuildMesh();
 }
 
 
