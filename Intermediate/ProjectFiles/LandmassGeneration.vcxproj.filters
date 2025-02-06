@@ -98,5 +98,14 @@
     <ClCompile Include="..\..\Source\LandmassGeneration\Manager\LandmassManagerWrapper.h">
       <Filter>Source\LandmassGeneration\Manager</Filter>
     </ClCompile>
+    <Filter Include="Source\LandmassGeneration\Shaders">
+      <UniqueIdentifier>{05467C82-B4C8-394E-9D4A-A2B123D4C4AF}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\LandmassGeneration\Shaders\LandmassComputeShader.cpp">
+      <Filter>Source\LandmassGeneration\Shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\LandmassGeneration\Shaders\LandmassComputeShader.h">
+      <Filter>Source\LandmassGeneration\Shaders</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

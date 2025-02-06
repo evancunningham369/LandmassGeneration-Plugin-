@@ -14,14 +14,25 @@ class LANDMASSGENERATION_API ALandmassManagerWrapper : public AActor
 public:	
 	ALandmassManagerWrapper();
 
-	float SpawnOffset = 100.f;
+	UPROPERTY(EditAnywhere)
+	UMaterialInstance* TerrainMaterial;
 
-	int32 NumOfChunksX = 50;
+	int32 TerrainWidth = 0;
 
-	int32 NumOfChunksY = 50;
+	int32 TerrainHeight = 0;
+
+	UPROPERTY(EditAnywhere)
+	int32 NumOfChunksX = 5;
+
+	UPROPERTY(EditAnywhere)
+	int32 NumOfChunksY = 5;
+
+	int32 NumOfChunksZ = 3;
 
 protected:
 	virtual void BeginPlay() override;
+
+	void CheckReadbackBuffer(FRHIGPUBufferReadback* ReadbackBuffer);
 
 	virtual void PostInitializeComponents() override;
 

@@ -1,7 +1,0 @@
-Breadcrumbs 'RHIThread'
- - Offscreen shadows
- - DirectLighting
- - LumenSceneLighting
- - Scene
- - FRDGBuilder::Execute
- - Frame 187

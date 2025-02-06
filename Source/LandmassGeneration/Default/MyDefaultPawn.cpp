@@ -10,6 +10,8 @@
 #include "LandmassGeneration/Manager/LandmassManager.h"
 #include "LandmassGeneration/DebugMacros.h"
 
+#define LANDMASS_CHANNEL ECC_GameTraceChannel1
+
 AMyDefaultPawn::AMyDefaultPawn()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -27,8 +29,6 @@ void AMyDefaultPawn::BeginPlay()
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
 	}
-
-
 }
 
 
@@ -78,12 +78,14 @@ void AMyDefaultPawn::TraceUnderCrosshairs()
 			HitResult,
 			Start,
 			End,
-			ECollisionChannel::ECC_Visibility
+			ECollisionChannel::ECC_GameTraceChannel1
 		);
 
 		if (HitResult.bBlockingHit)
 		{
 			CalculateHit(HitResult, CrosshairWorldDirection.GetSafeNormal());
+			DRAW_SPHERE(HitResult.ImpactPoint, FColor::Black);
+			DRAW_LINE(Start, HitResult.ImpactPoint);
 		}
 		else
 		{
@@ -94,21 +96,32 @@ void AMyDefaultPawn::TraceUnderCrosshairs()
 
 void AMyDefaultPawn::CalculateHit(const FHitResult& HitResult, const FVector& Direction)
 {
-	FVector BoxExtent(ExplosionRadius, ExplosionRadius, 0);
+	FVector BoxExtent(ExplosionRadius, ExplosionRadius, ExplosionRadius);
 	FCollisionShape BoxShape = FCollisionShape::MakeBox(BoxExtent);
-
+	float ExplosionRadiusCopy = ExplosionRadius;
 
 	TArray<FHitResult> HitResults;
+	TSet<ULandmassComponent*> UniqueLandmasses;
 
+	FVector HitLocation = HitResult.ImpactPoint;
 	if (GetWorld()->SweepMultiByChannel(
 		HitResults,
 		HitResult.ImpactPoint,
 		HitResult.ImpactPoint,
 		FQuat::Identity,
-		ECollisionChannel::ECC_Visibility,
+		ECollisionChannel::ECC_GameTraceChannel1,
 		BoxShape
 	))
 	{
-		ULandmassManager::Get()->DeformLandmasses(HitResults, ExplosionRadius, Direction);
+		for (const FHitResult& Result : HitResults)
+		{
+			ULandmassComponent* LandmassComponent = Cast<ULandmassComponent>(Result.GetComponent());
+			if (LandmassComponent)
+			{
+				UniqueLandmasses.Add(LandmassComponent);
+			}
+		}
 	}
+	
+	ULandmassManager::Get()->DeformLandmasses(UniqueLandmasses.Array(), HitLocation, ExplosionRadiusCopy);
 }

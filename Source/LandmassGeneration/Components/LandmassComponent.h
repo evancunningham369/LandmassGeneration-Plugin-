@@ -9,18 +9,16 @@
 #include "LandmassComponent.generated.h"
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class LANDMASSGENERATION_API ULandmassComponent : public USceneComponent
+class LANDMASSGENERATION_API ULandmassComponent : public UDynamicMeshComponent
 {
 	GENERATED_BODY()
 
 public:	
 	ULandmassComponent();
 
-	UPROPERTY(VisibleAnywhere)
-	class UProceduralMeshComponent* ProceduralMesh;
-
-	UPROPERTY(VisibleAnywhere)
-	UDynamicMeshComponent* DynamicMesh;
+	// Collision body
+	UPROPERTY(EditAnywhere)
+	UBodySetup* CachedBodySetup;
 
 	FDynamicMesh3 Mesh;
 
@@ -32,15 +30,16 @@ public:
 	ELandmassType LandmassType;
 
 	FVector LandmassOffset;
-	FIntVector LandmassOffsetScaleDown;
 
 	float TerrainSurface = 0.f;
 
-	UPROPERTY(EditAnywhere)
-	int32 Width = 4;
+	int32 Width;
 
-	UPROPERTY(EditAnywhere)
-	int32 Height = 8;
+	int32 Height;
+
+	UMaterialInstance* GrassMaterial;
+
+	UMaterialInstance* SoilMaterial;
 
 	TArray<float> TerrainMap;
 
@@ -60,22 +59,27 @@ public:
 	UPROPERTY(EditAnywhere)
 	bool bUsePerlinNoise = false;
 	void InitializeLandmassOffsets(FVector Offset);
-	void ReCreateMesh(const FVector& WorldHitLocation, const FVector& LocalHitLocation, float Radius);
 	void PopulateTerrainMap();
+	void CreateMeshData();
+	void MarchCube(FVector position, TArray<float> Cube);
+	int32 GetCubeConfiguration(TArray<float> Cube);
+	void BuildMesh();
+
+	void UpdateBodyCollision();
+	
+	void CreateMesh(int32 TerrainWidth, int32 TerrainHeight);
+	void ReCreateMesh(const FVector& WorldHitLocation, float Radius);
+	void ResetMesh();
+	void ClearMeshData();
+
+	void AssignTriangleMaterials();
 
 	FIntVector GetGridCellIndex(const FVector& Vertex);
 	int32 GetScalarIndex(FVector LocalPosition);
 
-	void MarchCube(FVector position, TArray<float> Cube);
-	int32 GetCubeConfiguration(TArray<float> Cube);
-	void ClearMeshData();
-
-	void CreateMeshData();
-
+	// Test Functions
 	void PrintVertexGrid();
-	void DrawVectors(const TArray<FVector>& Vectors);
-	void RemoveMesh(const FHitResult& HitResult, float Radius, const FVector& HitDirection);
-	void BuildMesh();
+	void DrawVectors();
 	void BuildTestCube();
 	void BuildTestTriangle();
 protected:
@@ -83,4 +87,5 @@ protected:
 public:	
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	FORCEINLINE void SetLandmassType(ELandmassType LandmassMeshType) { LandmassType = LandmassMeshType; }
+	FORCEINLINE void SetTerrainMaterials(UMaterialInstance* TerrainSoilMaterial, UMaterialInstance* TerrainGrassMaterial) { SoilMaterial = TerrainSoilMaterial; GrassMaterial = TerrainGrassMaterial; }
 };

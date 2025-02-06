@@ -2,13 +2,12 @@
 
 
 #include "Landmass.h"
-#include "ProceduralMeshComponent.h"
 #include "LandmassGeneration/Components/LandmassComponent.h"
 #include "LandmassGeneration/DebugMacros.h"
 
 ALandmass::ALandmass()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 	LandmassComponent = CreateDefaultSubobject<ULandmassComponent>(TEXT("Landmass Component"));
 	SetRootComponent(LandmassComponent);

@@ -17,14 +17,19 @@ class LANDMASSGENERATION_API ULandmassManager : public UObject
 public:
 	static ULandmassManager* Get();
 
-	void SpawnChunks(UWorld* World, float SpawnOffset, int32 NumOfChunksX, int32 NumOfChunksY);
-
+	void SpawnChunks(UWorld* World, float TerrainWidth, float TerrainHeight, int32 NumOfChunksX, int32 NumOfChunksY, int32 NumOfChunksZ, UMaterialInstance* TerrainMaterial);
+	void SpawnChunk(UWorld* World, float TerrainWidth, float TerrainHeight, UMaterialInstance* TerrainMaterial);
 	const TArray<TArray<int32>>& GetTriangulationTable() const { return TriangleTable; }
 	const TArray<TArray<FVector>>& GetEdgeTable() const { return EdgeTable; }
 	const TArray<FIntVector>& GetCornerTable() const { return CornerTable; }
-	void DeformLandmasses(const TArray<FHitResult>& HitResults, float ExplosionRadius, FVector Direction);
+	void DeformLandmasses(const TArray<class ULandmassComponent*>&, FVector HitLocation, float ExplosionRadius);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	double MaterialTransitionMultiplier = .002;
+
 private:
 
+	float GroundHeight;
 	FVector SpawnLocation{ 0, 0, 0 };
 
 	ULandmassManager();
@@ -48,4 +53,8 @@ private:
 	//{ 5, 0, 1, 5, 4, 0, 7, 6, 11, -1, -1, -1, -1, -1, -1, -1 },
 
 	TArray<TArray<int32>> TriangleTable;
+
+public: 
+	FORCEINLINE float GetGroundHeight() const { return GroundHeight; }
 };
+

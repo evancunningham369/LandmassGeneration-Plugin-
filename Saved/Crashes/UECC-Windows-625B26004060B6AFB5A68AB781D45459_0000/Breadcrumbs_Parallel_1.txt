@@ -1,8 +1,0 @@
-Breadcrumbs 'Parallel'
- - UpdateRadianceCaches
- - LumenScreenProbeGather
- - DiffuseIndirectAndAO
- - RenderDeferredLighting
- - Scene
- - FRDGBuilder::Execute
- - Frame 187

@@ -8,7 +8,7 @@ public class LandmassGeneration : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "ProceduralMeshComponent", "GeometryCore", "GeometryFramework" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput" ,"GeometryCore", "GeometryFramework", "RenderCore", "Renderer", "RHI"});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 
