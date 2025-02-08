@@ -9,6 +9,7 @@
 #include "LandmassGeneration/Landmass/Landmass.h"
 #include "LandmassGeneration/Manager/LandmassManager.h"
 #include "LandmassGeneration/DebugMacros.h"
+#include "LandmassGeneration/Compute/LandmassCompute.h"
 
 #define LANDMASS_CHANNEL ECC_GameTraceChannel1
 
@@ -49,7 +50,7 @@ void AMyDefaultPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 void AMyDefaultPawn::Click(const FInputActionValue& Value)
 {
-	TraceUnderCrosshairs();
+	//TraceUnderCrosshairs();
 }
 
 void AMyDefaultPawn::TraceUnderCrosshairs()

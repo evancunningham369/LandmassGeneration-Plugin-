@@ -8,6 +8,7 @@ public:
 
     BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
         SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<int>, OutputBufferUAV)
+        SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<int>, TriangleTableBufferSRV)
     END_SHADER_PARAMETER_STRUCT()
 
 };

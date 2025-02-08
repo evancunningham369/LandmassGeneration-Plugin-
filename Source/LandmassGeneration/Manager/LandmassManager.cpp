@@ -48,18 +48,18 @@ void ULandmassManager::SpawnChunks(UWorld* World, float TerrainWidth, float Terr
 			for (const FVector& SpawnOffset : SpawnData)
 			{
 				AsyncTask(ENamedThreads::GameThread, [this, World, SpawnOffset, TerrainWidth, TerrainHeight, TerrainMaterial]
-			{
+					{
 
-				// Important to recognize the Actor and Component have different locations so that marching cubes accounts for the difference
-				// when creating the mesh for each LandmassComponent.
-				ALandmass* Landmass = World->SpawnActor<ALandmass>(ALandmass::StaticClass(), FVector(0, 0, 0), FRotator::ZeroRotator);
-				Landmass->GetLandmassComponent()->InitializeLandmassOffsets(SpawnOffset);
+						// Important to recognize the Actor and Component have different locations so that marching cubes accounts for the difference
+						// when creating the mesh for each LandmassComponent.
+						ALandmass* Landmass = World->SpawnActor<ALandmass>(ALandmass::StaticClass(), FVector(0, 0, 0), FRotator::ZeroRotator);
+						Landmass->GetLandmassComponent()->InitializeLandmassOffsets(SpawnOffset);
 
-				Landmass->GetLandmassComponent()->CreateMesh(TerrainWidth, TerrainHeight);
-				Landmass->GetLandmassComponent()->SetMaterial(0, TerrainMaterial);
-			});
-		}
-	});
+						Landmass->GetLandmassComponent()->CreateMesh(TerrainWidth, TerrainHeight);
+						Landmass->GetLandmassComponent()->SetMaterial(0, TerrainMaterial);
+					});
+			}
+		});
 }
 
 void ULandmassManager::SpawnChunk(UWorld* World, float TerrainWidth, float TerrainHeight ,UMaterialInstance* TerrainMaterial)

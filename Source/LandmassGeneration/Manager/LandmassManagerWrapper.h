@@ -17,22 +17,21 @@ public:
 	UPROPERTY(EditAnywhere)
 	UMaterialInstance* TerrainMaterial;
 
-	int32 TerrainWidth = 0;
+	int32 TerrainWidth = 10;
 
-	int32 TerrainHeight = 0;
-
-	UPROPERTY(EditAnywhere)
-	int32 NumOfChunksX = 5;
+	int32 TerrainHeight = 10;
 
 	UPROPERTY(EditAnywhere)
-	int32 NumOfChunksY = 5;
+	int32 NumOfChunksX = 0;
+
+	UPROPERTY(EditAnywhere)
+	int32 NumOfChunksY = 0;
 
 	int32 NumOfChunksZ = 3;
 
 protected:
 	virtual void BeginPlay() override;
 
-	void CheckReadbackBuffer(FRHIGPUBufferReadback* ReadbackBuffer);
 
 	virtual void PostInitializeComponents() override;
 

@@ -62,6 +62,15 @@
     <ClCompile Include="..\..\Source\LandmassGeneration\Components\LandmassComponent.h">
       <Filter>Source\LandmassGeneration\Components</Filter>
     </ClCompile>
+    <Filter Include="Source\LandmassGeneration\Compute">
+      <UniqueIdentifier>{F318A056-D07A-3190-A9E3-D129B36ADC27}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\LandmassGeneration\Compute\LandmassCompute.cpp">
+      <Filter>Source\LandmassGeneration\Compute</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\LandmassGeneration\Compute\LandmassCompute.h">
+      <Filter>Source\LandmassGeneration\Compute</Filter>
+    </ClCompile>
     <Filter Include="Source\LandmassGeneration\Default">
       <UniqueIdentifier>{BB8AB25E-6EB5-3B2F-8C29-019D655ED57D}</UniqueIdentifier>
     </Filter>

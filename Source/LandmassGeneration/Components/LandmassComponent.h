@@ -56,13 +56,18 @@ public:
 
 	int32 ConfigIndex = 0;
 
+	bool bMeshChanged = false;
+
 	UPROPERTY(EditAnywhere)
 	bool bUsePerlinNoise = false;
 	void InitializeLandmassOffsets(FVector Offset);
 	void PopulateTerrainMap();
 	void CreateMeshData();
+	void CreateMeshDataOptimized();
 	void MarchCube(FVector position, TArray<float> Cube);
+	void MarchCubeOptimized(FVector position, float Cube[], TArray<TArray<int32>> TriangleTable, TArray<TArray<FVector>> EdgeTable);
 	int32 GetCubeConfiguration(TArray<float> Cube);
+	int32 GetCubeConfigurationOptimized(float Cube[]);
 	void BuildMesh();
 
 	void UpdateBodyCollision();
