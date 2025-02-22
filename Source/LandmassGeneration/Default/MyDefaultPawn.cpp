@@ -50,7 +50,7 @@ void AMyDefaultPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 void AMyDefaultPawn::Click(const FInputActionValue& Value)
 {
-	//TraceUnderCrosshairs();
+	TraceUnderCrosshairs();
 }
 
 void AMyDefaultPawn::TraceUnderCrosshairs()
@@ -84,7 +84,7 @@ void AMyDefaultPawn::TraceUnderCrosshairs()
 
 		if (HitResult.bBlockingHit)
 		{
-			CalculateHit(HitResult, CrosshairWorldDirection.GetSafeNormal());
+			CalculateHit(HitResult);
 			DRAW_SPHERE(HitResult.ImpactPoint, FColor::Black);
 			DRAW_LINE(Start, HitResult.ImpactPoint);
 		}
@@ -95,7 +95,7 @@ void AMyDefaultPawn::TraceUnderCrosshairs()
 	}
 }
 
-void AMyDefaultPawn::CalculateHit(const FHitResult& HitResult, const FVector& Direction)
+void AMyDefaultPawn::CalculateHit(const FHitResult& HitResult)
 {
 	FVector BoxExtent(ExplosionRadius, ExplosionRadius, ExplosionRadius);
 	FCollisionShape BoxShape = FCollisionShape::MakeBox(BoxExtent);
@@ -123,6 +123,5 @@ void AMyDefaultPawn::CalculateHit(const FHitResult& HitResult, const FVector& Di
 			}
 		}
 	}
-	
 	ULandmassManager::Get()->DeformLandmasses(UniqueLandmasses.Array(), HitLocation, ExplosionRadiusCopy);
 }

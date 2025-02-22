@@ -29,6 +29,15 @@
     <None Include="..\..\Config\DefaultInput.ini">
       <Filter>Config</Filter>
     </None>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{ECEE0A84-AF1B-3E31-98AE-C4CE303FAD9D}</UniqueIdentifier>
+    </Filter>
+    <None Include="..\..\Shaders\LandmassComputeShader.usf">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\..\Shaders\LandmassTables.ush">
+      <Filter>Shaders</Filter>
+    </None>
     <Filter Include="Source\LandmassGeneration">
       <UniqueIdentifier>{22589C02-39DC-3482-A025-D57E04329D4C}</UniqueIdentifier>
     </Filter>
@@ -65,6 +74,9 @@
     <Filter Include="Source\LandmassGeneration\Compute">
       <UniqueIdentifier>{F318A056-D07A-3190-A9E3-D129B36ADC27}</UniqueIdentifier>
     </Filter>
+    <ClCompile Include="..\..\Source\LandmassGeneration\Compute\ComputeShaderReadback.h">
+      <Filter>Source\LandmassGeneration\Compute</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\LandmassGeneration\Compute\LandmassCompute.cpp">
       <Filter>Source\LandmassGeneration\Compute</Filter>
     </ClCompile>
@@ -79,6 +91,15 @@
     </ClCompile>
     <ClCompile Include="..\..\Source\LandmassGeneration\Default\MyDefaultPawn.h">
       <Filter>Source\LandmassGeneration\Default</Filter>
+    </ClCompile>
+    <Filter Include="Source\LandmassGeneration\GameModes">
+      <UniqueIdentifier>{4D9ECA3E-3B54-3226-8973-A61B1AF6C1D8}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\LandmassGeneration\GameModes\LandmassGameMode.cpp">
+      <Filter>Source\LandmassGeneration\GameModes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\LandmassGeneration\GameModes\LandmassGameMode.h">
+      <Filter>Source\LandmassGeneration\GameModes</Filter>
     </ClCompile>
     <Filter Include="Source\LandmassGeneration\Landmass">
       <UniqueIdentifier>{7837F1C0-B4FC-3596-9C3D-4AEBD25DCFD3}</UniqueIdentifier>
@@ -101,12 +122,6 @@
     <ClCompile Include="..\..\Source\LandmassGeneration\Manager\LandmassManager.h">
       <Filter>Source\LandmassGeneration\Manager</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\LandmassGeneration\Manager\LandmassManagerWrapper.cpp">
-      <Filter>Source\LandmassGeneration\Manager</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Source\LandmassGeneration\Manager\LandmassManagerWrapper.h">
-      <Filter>Source\LandmassGeneration\Manager</Filter>
-    </ClCompile>
     <Filter Include="Source\LandmassGeneration\Shaders">
       <UniqueIdentifier>{05467C82-B4C8-394E-9D4A-A2B123D4C4AF}</UniqueIdentifier>
     </Filter>
@@ -115,6 +130,15 @@
     </ClCompile>
     <ClCompile Include="..\..\Source\LandmassGeneration\Shaders\LandmassComputeShader.h">
       <Filter>Source\LandmassGeneration\Shaders</Filter>
+    </ClCompile>
+    <Filter Include="Source\LandmassGeneration\Subsystems">
+      <UniqueIdentifier>{1C98EEE6-FD94-39F7-BFC1-ECF1500D3746}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\LandmassGeneration\Subsystems\LandmassManagerSubsystem.cpp">
+      <Filter>Source\LandmassGeneration\Subsystems</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\LandmassGeneration\Subsystems\LandmassManagerSubsystem.h">
+      <Filter>Source\LandmassGeneration\Subsystems</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

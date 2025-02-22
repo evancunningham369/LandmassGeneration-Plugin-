@@ -21,19 +21,36 @@ ULandmassComponent::ULandmassComponent()
 void ULandmassComponent::BeginPlay()
 {
 	Super::BeginPlay();	
-}
-
-void ULandmassComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-}
-
-void ULandmassComponent::CreateMesh(int32 TerrainWidth, int32 TerrainHeight)
-{
-	TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("CreateMesh"))
-	Width = TerrainWidth;
-	Height = TerrainHeight;
 	SetComplexAsSimpleCollisionEnabled(true);
+
+}
+
+void ULandmassComponent::BuildMesh()
+{
+	AsyncTask(ENamedThreads::AnyBackgroundThreadNormalTask, [this]()
+		{
+			TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("Compute Normals"));
+			FMeshNormals::QuickComputeVertexNormals(Mesh);
+
+			AsyncTask(ENamedThreads::GameThread, [this]()
+				{
+					TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("Set Mesh"));
+					
+					SetMesh(MoveTemp(Mesh));
+					UE_LOG(LogTemp, Warning, TEXT("Vertex Total: %d"), Mesh.VertexCount())
+
+				});
+		});
+}
+
+void ULandmassComponent::CreateMesh(int32 TerrainMeshWidth, int32 TerrainMeshHeight)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Landmass Spawned"));
+
+	TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("CreateMesh"))
+	Width = TerrainMeshWidth;
+	Height = TerrainMeshHeight;
+
 	//UE_LOG(LogTemp, Warning, TEXT("LandmassType: %d"), LandmassType)
 	//UE_LOG(LogTemp, Warning, TEXT("LandmassOffset: %s"), *LandmassOffsetScaleDown.ToString());
 	TerrainMap.SetNum(Width * Width * Height);
@@ -47,20 +64,12 @@ void ULandmassComponent::CreateMesh(int32 TerrainWidth, int32 TerrainHeight)
 
 			AsyncTask(ENamedThreads::GameThread, [this]()
 				{
+					//UE_LOG(LogTemp, Warning, TEXT("Vertex Count: %d"), Mesh.VertexCount())
 					BuildMesh();
 				});
 		});
 }
 
-void ULandmassComponent::BuildMesh()
-{
-	TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("Build Mesh"))
-	FMeshNormals::QuickComputeVertexNormals(Mesh);
-	SetMesh(MoveTempIfPossible(Mesh));
-
-}
-
-// Populates the vertices of the terrain map
 void ULandmassComponent::PopulateTerrainMap()
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("Populate Terrain Map"))
@@ -70,7 +79,8 @@ void ULandmassComponent::PopulateTerrainMap()
 		{
 			for (int32 y = 0; y < Width; y++)
 			{
-				if (x == 0 || x == Width - 1 || y == 0 || y == Width - 1 || z == 0 || z == Height - 1)
+				//UE_LOG(LogTemp, Warning, TEXT("Data: %s"), *FVector(x, y, z).ToString())
+				if (z == Height - 1)
 				{
 					SetTerrainMapValue(x, y, z, 1.f);
 				}
@@ -81,184 +91,134 @@ void ULandmassComponent::PopulateTerrainMap()
 			}
 		}
 	}
+	UE_LOG(LogTemp, Warning, TEXT("Terrain Map Total: %d"), TerrainMap.Num())
+
 }
 
 void ULandmassComponent::CreateMeshDataOptimized()
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("Create Mesh Data Optimized"));
 
-	TArray<FIntVector> CornerTable = ULandmassManager::Get()->GetCornerTable();
-	const auto& TriangleTable = ULandmassManager::Get()->GetTriangulationTable();
-	const auto& EdgeTable = ULandmassManager::Get()->GetEdgeTable();
+	const TArray<FIntVector> CornerTable = ULandmassManager::Get()->GetCornerTable();
+	const  TArray<TArray<int32>>& TriangleTable = ULandmassManager::Get()->GetTriangulationTable();
+	const TArray<TArray<FVector>>& EdgeTable = ULandmassManager::Get()->GetEdgeTable();
 
-	for (int32 x = 0; x < Width - 1; x++)
-	{
-		for (int32 z = 0; z < Height - 1; z++)
+	TArray<FDynamicMesh3> ThreadMeshes;
+	ThreadMeshes.SetNum(Width - 1);
+	
+
+	ParallelFor(Width - 1, [&](int32 x)
 		{
-			for (int32 y = 0; y < Width - 1; y++)
+			float Cube[8];
+			FIndex3i TriangleIndices;
+			FDynamicMesh3& CurrentMesh = ThreadMeshes[x];
+			
+			for (int32 z = 0; z < Height - 1; z++)
 			{
-
-				float Cube[8];
-
-				for (int32 i = 0; i < 8; i++)
+				for (int32 y = 0; y < Width - 1; y++)
 				{
-					FIntVector Corner = FIntVector(x, y, z) + CornerTable[i];
-					Cube[i] = GetTerrainMapValue(Corner.X, Corner.Y, Corner.Z);
-				}
+					const FVector BasePosition = (FVector(x, y, z) * 100.f);
 
-				MarchCubeOptimized((FVector(x, y, z) * 100.f) + LandmassOffset, Cube, TriangleTable, EdgeTable);
+					for (int32 i = 0; i < 8; i++)
+					{
+						FIntVector Corner = CornerTable[i];
+						Cube[i] = GetTerrainMapValue(x + Corner.X, y + Corner.Y, z + Corner.Z);
+					}
+
+					MarchCubeOptimized(BasePosition, Cube, TriangleTable, EdgeTable, CurrentMesh, TriangleIndices);
+				}
 			}
+		});
+
+	Mesh.Clear();
+
+	for (const FDynamicMesh3& ThreadMesh : ThreadMeshes)
+	{
+		int32 BaseVertexIndex = Mesh.VertexCount();
+
+		for (int32 VertexID : ThreadMesh.VertexIndicesItr())
+		{
+			Mesh.AppendVertex(ThreadMesh.GetVertex(VertexID));
+		}
+
+		for (int32 TriangleID : ThreadMesh.TriangleIndicesItr())
+		{
+			FIndex3i Triangle = ThreadMesh.GetTriangle(TriangleID);
+			Triangle.A += BaseVertexIndex;
+			Triangle.B += BaseVertexIndex;
+			Triangle.C += BaseVertexIndex;
+			Mesh.AppendTriangle(Triangle);
 		}
 	}
 }
 
-
-void ULandmassComponent::MarchCubeOptimized(FVector position, float Cube[], TArray<TArray<int32>> TriangleTable, TArray<TArray<FVector>> EdgeTable)
+void ULandmassComponent::MarchCubeOptimized(
+	const FVector& position, 
+	const float Cube[], 
+	const TArray<TArray<int32>>& TriangleTable, 
+	const TArray<TArray<FVector>>& EdgeTable, 
+	FDynamicMesh3& CurrentMesh, 
+	FIndex3i& TriangleIndices
+)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("March Cube Optimized"));
 
 	int32 Index = GetCubeConfigurationOptimized(Cube);
 
 	// Triangulation Table is only valid with indicies between (0,255)
-	if (Index == 0 || Index == 255)
-	{
-		return;
-	}
-	int32 edgeIndex = 0;
-
-	// for every triangle...(Never more than 5 triangles in any row of triangle table)
-	for (int32 i = 0; i < 5; i++)
-	{
-		FIndex3i TriangleIndices;
-
-		// for every point in triangle...(Never more than 3 vertices in any given triangle)
-		for (int32 p = 0; p < 3; p++)
-		{
-			// Get an edge in the table
-			int32 indice = TriangleTable[Index][edgeIndex];
-			if (indice == -1)
-			{
-				return;
-			}
-
-			// Get the first vertex of the edge that is intersected
-			FVector EdgeOffset1 = EdgeTable[indice][0];
-			FVector vert1 = position + EdgeOffset1;
-			float value1 = Cube[GetScalarIndex(EdgeOffset1)];
-
-			// Get the second vertex of the edge that is intersected
-			FVector EdgeOffset2 = EdgeTable[indice][1];
-			FVector vert2 = position + EdgeOffset2;
-			float value2 = Cube[GetScalarIndex(EdgeOffset2)];
-
-			float t = (TerrainSurface - value1) / (value2 - value1);
-			FVector VertexPosition = vert1 + t * (vert2 - vert1);
-
-			//Add position of vertex intersection point
-			int32 VertexIndex = Mesh.AppendVertex(VertexPosition);
-			TriangleIndices[p] = VertexIndex;
-
-			//Add number of triangles for this cube
-			//Triangles.Add(Vertices.Num() - 1);
-			edgeIndex++;
-		}
-		Mesh.AppendTriangle(FIndex3i(TriangleIndices[0], TriangleIndices[1], TriangleIndices[2]));
-	}
-}
-
-// populates the cubes of the terrain map, so number of cubes = number  of edges - 1
-//		__ __
-// EX: |__|__| - 3 edges, 2 cubes
-//		
-void ULandmassComponent::CreateMeshData()
-{
-
-	TArray<FIntVector> CornerTable = ULandmassManager::Get()->GetCornerTable();
-
-	for (int32 x = 0; x < Width - 1; x++)
-	{
-		for (int32 z = 0; z < Height - 1; z++)
-		{
-			for (int32 y = 0; y < Width - 1; y++)
-			{
-				TArray<float> Cube;
-				Cube.SetNum(8);
-				// For the first vertex
-				for (int32 i = 0; i < 8; i++)
-				{
-					// Get the corner value relative to the current vertex position
-					FIntVector Corner = FIntVector(x, y, z) + CornerTable[i];
-
-					// Assigns a cube corner a "density" value from the terrain map(The variable point filled in by previous function)
-					Cube[i] = GetTerrainMapValue(Corner.X, Corner.Y, Corner.Z);
-				}
-
-				MarchCube((FVector(x, y, z) * 100.f) + LandmassOffset, Cube);
-			}
-		}
-	}
-
-}
-
-void ULandmassComponent::MarchCube(FVector position, TArray<float> Cube)
-{
-	TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("March Cube"))
-
-	TArray<TArray<int32>> TriangleTable = ULandmassManager::Get()->GetTriangulationTable();
-	TArray<TArray<FVector>> EdgeTable = ULandmassManager::Get()->GetEdgeTable();
-	// Converts Cube verticies into binary. Vertices inside the mesh = 1, outside = 0
-	int32 Index = GetCubeConfiguration(Cube);
+	if (Index == 0 || Index == 255) return;
 	
-	// Triangulation Table is only valid with indicies between (0,255)
-	if (Index == 0 || Index == 255)
-	{
-		return;
-	}
+	// Get row of edges
+	const TArray<int32>& CurrentTriangleTable = TriangleTable[Index];
 	int32 edgeIndex = 0;
+	FIndex3i TriangleIndicesArr;
+
+	FVector vert1, vert2;
+	float value1, value2, t;
 
 	// for every triangle...(Never more than 5 triangles in any row of triangle table)
-	for (int32 i = 0; i < 5; i++)
+	while(edgeIndex < CurrentTriangleTable.Num() && CurrentTriangleTable[edgeIndex] != -1)
 	{
-		FIndex3i TriangleIndices;
-
 		// for every point in triangle...(Never more than 3 vertices in any given triangle)
 		for (int32 p = 0; p < 3; p++)
 		{
-			// Get an edge in the table
-			int32 indice = TriangleTable[Index][edgeIndex];
-			if (indice == -1)
-			{
-				return;
-			}
-			
-			// Get the first vertex of the edge that is intersected
-			FVector EdgeOffset1 = EdgeTable[indice][0];
-			FVector vert1 = position + EdgeOffset1;
-			float value1 = Cube[GetScalarIndex(EdgeOffset1)];
+			// Get an edge value[0 - 11] in the table row
+			const int32 indice = CurrentTriangleTable[edgeIndex];
 
-			// Get the second vertex of the edge that is intersected
-			FVector EdgeOffset2 = EdgeTable[indice][1];
-			FVector vert2 = position + EdgeOffset2;
-			float value2 = Cube[GetScalarIndex(EdgeOffset2)];
+			// Get Array of 2 base vectors that make up the vertices of that edge value
+			const TArray<FVector>& CurrentEdge = EdgeTable[indice];
 
-			float t = (TerrainSurface - value1) / (value2 - value1);
+			// Get the 2 base vectors that make up that edge
+			const FVector& EdgeOffset1 = CurrentEdge[0];
+			const FVector& EdgeOffset2 = CurrentEdge[1];
+
+			// Get the actual world position of the vertices that make up that edge
+			vert1 = position + EdgeOffset1;
+			vert2 = position + EdgeOffset2;
+
+			value1 = Cube[GetScalarIndex(EdgeOffset1)];
+			value2 = Cube[GetScalarIndex(EdgeOffset2)];
+
+			t = (TerrainSurface - value1) / (value2 - value1);
 			FVector VertexPosition = vert1 + t * (vert2 - vert1);
+			//UE_LOG(LogTemp, Warning, TEXT("Vertex Position: %s"), *VertexPosition.ToString());
 
 			//Add position of vertex intersection point
-			int32 VertexIndex = Mesh.AppendVertex(VertexPosition);
+			int32 VertexIndex = CurrentMesh.AppendVertex(VertexPosition);
 			TriangleIndices[p] = VertexIndex;
 
 			//Add number of triangles for this cube
 			//Triangles.Add(Vertices.Num() - 1);
 			edgeIndex++;
 		}
-		Mesh.AppendTriangle(FIndex3i(TriangleIndices[0], TriangleIndices[1], TriangleIndices[2]));
+		CurrentMesh.AppendTriangle(TriangleIndices);
 	}
 }
 
-// This is in a background thread
-void ULandmassComponent::ReCreateMesh(const FVector& WorldHitLocation, float Radius)
+void ULandmassComponent::ReCreateMeshLegacy(const FVector& WorldHitLocation, float Radius)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("ReCreate Mesh Legacy"));
+
 	ResetMesh();
 
 	float SquaredSphereRadius = Radius * Radius;
@@ -275,8 +235,11 @@ void ULandmassComponent::ReCreateMesh(const FVector& WorldHitLocation, float Rad
 		{
 			for (int32 y = 0; y < Width; y++)
 			{
-				FVector Vertex = (FVector(x, y, z) * 100) + LandmassOffset;
-				//DRAW_POINT(Vertex, FColor::Blue);
+				FVector Vertex = (FVector(x, y, z) * 100) + GetComponentLocation();
+				/*AsyncTask(ENamedThreads::GameThread, [this, Vertex]()
+					{
+						DRAW_POINT(Vertex, FColor::Green);
+					});*/
 				if (FVector::DistSquared(Vertex, WorldHitLocation) <= SquaredSphereRadius)
 				{
 					SetTerrainMapValue(x, y, z, 1.f);
@@ -284,57 +247,146 @@ void ULandmassComponent::ReCreateMesh(const FVector& WorldHitLocation, float Rad
 			}
 		}
 	}
-	CreateMeshData();
+	CreateMeshDataOptimized();
+	UpdateMesh();
+}
+
+void ULandmassComponent::UpdateMesh()
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("Compute Normals"));
+	FMeshNormals::QuickComputeVertexNormals(Mesh);
+
 	AsyncTask(ENamedThreads::GameThread, [this]()
 		{
-			BuildMesh();
+			//TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("Edit Mesh Operation"));
+			TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("Direct Update"));
+
+			FDynamicMesh3* InternalMesh = GetMesh();
+			if (InternalMesh)
+			{
+				*InternalMesh = MoveTemp(Mesh);
+				MarkRenderStateDirty();
+
+				Async(EAsyncExecution::ThreadPool, [this]()
+					{
+						if (UBodySetup* BodySetup = GetBodySetup())
+						{
+							BodySetup->InvalidatePhysicsData();
+							BodySetup->CreatePhysicsMeshes();
+
+						}
+
+						AsyncTask(ENamedThreads::GameThread, [this]()
+							{
+								RecreatePhysicsState();
+							});
+					});
+			}
 		});
 }
 
 
-// Use for a custom collision body.
-void ULandmassComponent::UpdateBodyCollision()
+void ULandmassComponent::UpdateMeshCollision()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Setting Collision Body"));
-	if (!CachedBodySetup)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("No Cached Body Setup"));
-		return;
-	}
-	FBoxSphereBounds LocalBoxBounds = CalcBounds(FTransform::Identity);
-
-	const FVector BoxCenter(LocalBoxBounds.Origin);
-	const FVector BoxExtent(LocalBoxBounds.BoxExtent);
-
-	CachedBodySetup->InvalidatePhysicsData();
-	CachedBodySetup->AggGeom.BoxElems.Empty();
-
-	FKBoxElem BoxElem;
-	BoxElem.Center = BoxCenter;
-	BoxElem.X = BoxExtent.X * 2.0f;
-	BoxElem.Y = BoxExtent.Y * 2.0f;
-	BoxElem.Z = BoxExtent.Z * 2.0f;
-
-	CachedBodySetup->AggGeom.BoxElems.Add(BoxElem);
-	CachedBodySetup->CreatePhysicsMeshes();
-	RecreatePhysicsState();
+	SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	SetCollisionObjectType(ECC_GameTraceChannel1);
+	SetComplexAsSimpleCollisionEnabled(true);
 }
 
-// Assigns each triangle a material based on it's world height. 
-// Probably won't use this as I set the material for each chunk when I spawn them
-void ULandmassComponent::AssignTriangleMaterials()
+void ULandmassComponent::ReCreateMesh(const FVector& WorldHitLocation, float Radius)
 {
-	for (int32 TriangleID : Mesh.TriangleIndicesItr())
+	TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("Recreating Mesh"))
+
+		ResetMesh();
+	TArray<FVector> VerticesToRemove;
+
+	float SquaredSphereRadius = Radius * Radius;
+
+	DRAW_SPHERE_SIZE(WorldHitLocation, Radius, FColor::Green);
+
+	FColor RandomColor = FColor::MakeRandomColor();
+	EditMesh([&](FDynamicMesh3& Mesh)
+		{
+			for (int32 VertexId : Mesh.VertexIndicesItr())
+			{
+				FVector Vertex = Mesh.GetVertex(VertexId);
+				if (double Distance = FVector::DistSquared(Vertex, WorldHitLocation) <= SquaredSphereRadius)
+				{
+					Vertex.Z -= FMath::Abs(Distance - Radius);
+					Mesh.SetVertex(VertexId, Vertex);
+				}
+			}
+			FMeshNormals::QuickComputeVertexNormals(Mesh);
+		}, EDynamicMeshComponentRenderUpdateMode::FastUpdate);
+}
+
+void ULandmassComponent::CreateGround()
+{
+	for (int32 x = 0; x < NumSquares; x++)
 	{
-		FVector Center = Mesh.GetTriCentroid(TriangleID);
-		int32 MaterialID = Center.Z > 2200 ? 1 : 0;
-		Mesh.Attributes()->GetMaterialID()->SetValue(TriangleID, MaterialID);
+		for (int32 y = 0; y < NumSquares; y++)
+		{
+			CreateSquare((x * TerrainWidth), (y * TerrainWidth));
+		}
 	}
-	if (GrassMaterial && SoilMaterial)
+}
+
+void ULandmassComponent::CreateSquare(float XOffset, float YOffset)
+{
+	FVector Vertex1(XOffset + TerrainWidth, YOffset, 0.f);
+	FVector Vertex2(XOffset, YOffset + TerrainWidth, 0.f);
+	FVector Vertex3(XOffset, YOffset, 0.f);
+
+	int32 VertexId1 = Mesh.AppendVertex(Vertex1);
+	int32 VertexId3 = Mesh.AppendVertex(Vertex2);
+	int32 VertexId2 = Mesh.AppendVertex(Vertex3);
+
+	Mesh.AppendTriangle(FIndex3i(VertexId1, VertexId2, VertexId3));
+
+	FVector Vertex4(XOffset + TerrainWidth, YOffset + TerrainWidth, 0.f);
+
+	int32 VertexId4 = Mesh.AppendVertex(Vertex4);
+
+	Mesh.AppendTriangle(FIndex3i(VertexId4, VertexId1, VertexId3));
+}
+
+void ULandmassComponent::CreateCraterAtLocation(FVector HitLocation, float CraterDepth)
+{
+	TArray<int32> SquareVertices;
+	TArray<int32> TrianglesToRemove;
+
+	for (int32 TriangleId : Mesh.TriangleIndicesItr())
 	{
-		SetMaterial(1, GrassMaterial);
-		SetMaterial(0, SoilMaterial);
+		FVector Center = Mesh.GetTriCentroid(TriangleId);
+		if (FVector::DistSquared(Center, HitLocation) <= 500.f)
+		{
+			TrianglesToRemove.Add(TriangleId);
+
+			FVector V1 = Mesh.GetTriVertex(TriangleId, 0);
+			FVector V2 = Mesh.GetTriVertex(TriangleId, 1);
+			FVector V3 = Mesh.GetTriVertex(TriangleId, 2);
+			DRAW_POINT(V1, FColor::Red);
+			DRAW_POINT(V2, FColor::Red);
+			DRAW_POINT(V3, FColor::Red);
+
+		}
 	}
+}
+
+void ULandmassComponent::CreateTriangle(float XOffset, float YOffset)
+{
+	FVector Vertex1(XOffset, 0, 0);
+	DRAW_POINT_PERM(Vertex1, FColor::Blue);
+	FVector Vertex2(XOffset + 100, 0, 0);
+	DRAW_POINT_PERM(Vertex2, FColor::Green);
+	FVector Vertex3((Vertex1.X + Vertex2.X) / 2, 0, -100);
+	DRAW_POINT_PERM(Vertex3, FColor::Red);
+
+	int32 VertexId1 = Mesh.AppendVertex(Vertex1);
+	int32 VertexId2 = Mesh.AppendVertex(Vertex2);
+	int32 VertexId3 = Mesh.AppendVertex(Vertex3);
+
+	Mesh.AppendTriangle(FIndex3i(VertexId1, VertexId2, VertexId3));
 }
 
 int32 ULandmassComponent::GetScalarIndex(FVector LocalPosition)
@@ -368,7 +420,7 @@ int32 ULandmassComponent::GetCubeConfiguration(TArray<float> Cube)
 	return configurationIndex;
 }
 
-int32 ULandmassComponent::GetCubeConfigurationOptimized(float Cube[])
+int32 ULandmassComponent::GetCubeConfigurationOptimized(const float Cube[])
 {
 	int32 configurationIndex = 0;
 	for (int32 i = 0; i < 8; i++)
@@ -468,7 +520,15 @@ void ULandmassComponent::DrawVectors()
 {
 	for (int32 VertexID : Mesh.VertexIndicesItr())
 	{
-		DRAW_POINT_PERM(Mesh.GetVertex(VertexID), FColor::Red)
+		DRAW_POINT_PERM(Mesh.GetVertex(VertexID), FColor::Blue)
+	}
+}
+
+void ULandmassComponent::PrintVectors()
+{
+	for (int32 VertexID : Mesh.VertexIndicesItr())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Vertex: %s"), *Mesh.GetVertex(VertexID).ToString())
 	}
 }
 
@@ -540,6 +600,28 @@ void ULandmassComponent::BuildTestTriangle()
 	//TArray<FProcMeshTangent> Tangents;
 
 	//ProceduralMesh->CreateMeshSection_LinearColor(0, TestVertices, TestTriangles, Normals, UVs, VertexColors, Tangents, true);
+}
+
+void ULandmassComponent::CreateTestCrater()
+{
+	FVector Vertex1(0, 0, 0);
+	FVector Vertex2(100, 0, 0);
+	FVector Vertex3(0, 100, 0);
+	FVector Vertex4(100, 100, 0);
+
+	FVector Vertex5(50, 50, -100);
+
+	int32 VertexId1 = Mesh.AppendVertex(Vertex1);
+	int32 VertexId2 = Mesh.AppendVertex(Vertex2);
+	int32 VertexId3 = Mesh.AppendVertex(Vertex3);
+	int32 VertexId4 = Mesh.AppendVertex(Vertex4);
+
+	int32 VertexId5 = Mesh.AppendVertex(Vertex5);
+
+	Mesh.AppendTriangle(FIndex3i(VertexId2, VertexId1, VertexId5));
+	Mesh.AppendTriangle(FIndex3i(VertexId1, VertexId3, VertexId5));
+	Mesh.AppendTriangle(FIndex3i(VertexId3, VertexId4, VertexId5));
+	Mesh.AppendTriangle(FIndex3i(VertexId4, VertexId2, VertexId5));
 }
 
 

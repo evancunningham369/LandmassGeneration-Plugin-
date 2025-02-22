@@ -10,7 +10,8 @@
 			"LoadingPhase": "PostConfigInit",
 			"AdditionalDependencies": [
 				"Engine",
-				"CoreUObject"
+				"CoreUObject",
+				"ModelingComponents"
 			]
 		}
 	],

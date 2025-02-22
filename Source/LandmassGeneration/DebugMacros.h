@@ -4,6 +4,7 @@
 
 #define DRAW_POINT(Location, Color) DrawDebugPoint(GetWorld(), Location, 20.f, Color, false, 1.f);
 #define DRAW_POINT_PERM(Location, Color) DrawDebugPoint(GetWorld(), Location, 20.f, Color, true, -1.f);
+#define DRAW_POINT_PERM_STATIC(World, Location, Color) DrawDebugPoint(World, Location, 20.f, Color, true, -1.f);
 #define DRAW_LINE(Start, End) DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 5.f);
 #define DRAW_LINE_PERM(Start, End) DrawDebugLine(GetWorld(), Start, End, FColor::Red, true, -1.f);
 #define DRAW_SPHERE(Location, Color) DrawDebugSphere(GetWorld(), Location, 20.f, 12, Color, false, 1.f);

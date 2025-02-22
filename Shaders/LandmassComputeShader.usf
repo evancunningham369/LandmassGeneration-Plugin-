@@ -1,0 +1,30 @@
+#pragma once
+#include "/Engine/Public/Platform.ush"
+#include "LandmassTables.ush"
+
+RWStructuredBuffer<float4> Vertices : register(u0); // register u is used for Read/Write buffers
+RWStructuredBuffer<uint3> Triangles : register(u1); 
+RWStructuredBuffer<float> DensityMap : register(u2); 
+
+[numthreads(8, 8, 8)] // Define threads per group
+void MainCS(uint3 ThreadId : SV_DispatchThreadID, uint3 GroupId : SV_GroupID)
+{   
+    
+    int x = ThreadId.x;
+    int y = ThreadId.y;
+    int z = ThreadId.z;
+    
+    //uint index = 0;
+    // Group Id is the coordinates(0 or 7)
+    int GlobalIndex = (x + (y * 8) + (z * 64));
+
+    // Swap y and z
+    //Vertices[GlobalIndex] = float4(x, z, y, DensityMap[GlobalIndex]);
+    
+    
+}
+
+
+
+
+

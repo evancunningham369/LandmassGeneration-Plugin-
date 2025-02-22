@@ -19,71 +19,41 @@ ULandmassManager* ULandmassManager::Get()
 	return Instance;
 }
 
-void ULandmassManager::SpawnChunks(UWorld* World, float TerrainWidth, float TerrainHeight ,int32 NumOfChunksX, int32 NumOfChunksY, int32 NumOfChunksZ, UMaterialInstance* TerrainMaterial)
-{
-	// How far apart each Landmass should spawn from another
-	float OffsetWidthScale = TerrainWidth * 70;
-	int32 TotalChunks = NumOfChunksX * NumOfChunksY * NumOfChunksZ;
-
-	TArray<FVector> SpawnData;
-	SpawnData.Reserve(TotalChunks);
-	FCriticalSection SpawnDataLock;
-
-	ParallelFor(TotalChunks, [&](int32 Index)
-		{
-			int32 x = Index / (NumOfChunksY * NumOfChunksZ);
-			int32 yz = Index % (NumOfChunksY * NumOfChunksZ);
-			int32 y = yz / NumOfChunksZ;
-			int32 z = yz % NumOfChunksZ;
-
-			FVector Offset = FVector(x, y, z) * OffsetWidthScale;
-			{
-				FScopeLock Lock(&SpawnDataLock);
-				SpawnData.Emplace(Offset);
-			}
-		}, EParallelForFlags::Unbalanced);
-
-	Async(EAsyncExecution::ThreadPool, [this, World, SpawnData, TerrainWidth, TerrainHeight, TerrainMaterial]
-		{
-			for (const FVector& SpawnOffset : SpawnData)
-			{
-				AsyncTask(ENamedThreads::GameThread, [this, World, SpawnOffset, TerrainWidth, TerrainHeight, TerrainMaterial]
-					{
-
-						// Important to recognize the Actor and Component have different locations so that marching cubes accounts for the difference
-						// when creating the mesh for each LandmassComponent.
-						ALandmass* Landmass = World->SpawnActor<ALandmass>(ALandmass::StaticClass(), FVector(0, 0, 0), FRotator::ZeroRotator);
-						Landmass->GetLandmassComponent()->InitializeLandmassOffsets(SpawnOffset);
-
-						Landmass->GetLandmassComponent()->CreateMesh(TerrainWidth, TerrainHeight);
-						Landmass->GetLandmassComponent()->SetMaterial(0, TerrainMaterial);
-					});
-			}
-		});
-}
-
-void ULandmassManager::SpawnChunk(UWorld* World, float TerrainWidth, float TerrainHeight ,UMaterialInstance* TerrainMaterial)
-{
-	ALandmass* Landmass = World->SpawnActor<ALandmass>(ALandmass::StaticClass(), FVector(0,0,0), FRotator::ZeroRotator);
-	Landmass->GetLandmassComponent()->InitializeLandmassOffsets(FVector(0, 0, 0));
-	if (Landmass->GetLandmassComponent())
-	{
-		Landmass->GetLandmassComponent()->CreateMesh(TerrainWidth, FMath::Max(TerrainHeight - 2, 1));
-		Landmass->GetLandmassComponent()->SetMaterial(0, TerrainMaterial);
-	}
-}
-
 void ULandmassManager::DeformLandmasses(const TArray<ULandmassComponent*>& HitLandmasses, FVector HitLocation ,float ExplosionRadius)
 {	
 	for (ULandmassComponent* LandmassComponent : HitLandmasses)
 	{
 		Async(EAsyncExecution::ThreadPool, [LandmassComponent ,HitLocation, ExplosionRadius]()
 			{
-				LandmassComponent->ReCreateMesh(HitLocation, ExplosionRadius);
+				LandmassComponent->ReCreateMeshLegacy(HitLocation, ExplosionRadius);
 			});
 	}
-
 }
+
+//void ULandmassManager::CreateTerrain()
+//{
+//	UWorld* World = GetWorld();
+//	for (int32 x = 0; x < NumLandmasses; x++)
+//	{
+//		for (int32 y = 0; y < NumLandmasses; y++)
+//		{
+//			FVector SpawnLocation = FVector(0, 0, y * 100);
+//
+//			ALandmass* NewLandmass = World->SpawnActor<ALandmass>(ALandmass::StaticClass(), SpawnLocation, FRotator::ZeroRotator);
+//
+//			if (NewLandmass && NewLandmass->GetLandmassComponent())
+//			{
+//				NewLandmass->GetLandmassComponent()->CreateGround();
+//				NewLandmass->GetLandmassComponent()->BuildMesh();
+//				Landmasses.Add(NewLandmass);
+//			}
+//			else
+//			{
+//				UE_LOG(LogTemp, Warning, TEXT("Actor not valid"));
+//			}
+//		}
+//	}
+//}
 
 ULandmassManager::ULandmassManager()
 {

@@ -9,6 +9,8 @@ public:
     virtual void StartupModule() override
     {
         UE_LOG(LogTemp, Warning, TEXT("LandmassGeneration Module Loaded!"));
+        FString ShaderDirectory = FPaths::Combine(FPaths::ProjectDir(), TEXT("Shaders"));
+        AddShaderSourceDirectoryMapping("/Project", ShaderDirectory);
     }
 
     virtual void ShutdownModule() override

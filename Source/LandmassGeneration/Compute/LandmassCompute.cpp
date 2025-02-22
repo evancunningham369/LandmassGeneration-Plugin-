@@ -8,135 +8,107 @@
 #include "ShaderParameterUtils.h"       // Required for shader parameters
 #include "RHIResources.h"               // Handles RHI buffers and resources
 #include <LandmassGeneration/Manager/LandmassManager.h>
+#include "ComputeShaderReadback.h"
 
-void FMyComputeShaderWrapper::Dispatch(uint32 SizeOfElement, uint32 NumElements)
+void FMyComputeShaderWrapper::Dispatch(UWorld* World, uint32 NumVertices, const TArray<float>& DensityData)
 {
+	//UE_LOG(LogTemp, Warning, TEXT("Num Vertices: %d"), NumVertices)
+	//UE_LOG(LogTemp, Warning, TEXT("Num Density: %d"), DensityData.Num())
 	ENQUEUE_RENDER_COMMAND(MyRenderCommand)(
-		[this, SizeOfElement, NumElements](FRHICommandListImmediate& RHICmdList)
+		[World, this, NumVertices, DensityData](FRHICommandListImmediate& RHICmdList)
 		{
+			uint32 DensityMapSize = DensityData.Num();
 			// Get the global shader map
 			TShaderMapRef<FMyComputeShader> MyComputeShader(GetGlobalShaderMap(GMaxRHIFeatureLevel));
 
 			// Use RDG for GPU resource management
 			FRDGBuilder GraphBuilder(RHICmdList);
-
-			// Create Triangle Table SRV
-			FRDGBufferSRVRef TriangleTableBufferSRV = CreateTriangleTableSRV(GraphBuilder);
-
 			// Create GPU Buffer
-			FRDGBufferRef OutputBuffer = CreateOutputBuffer(GraphBuilder, SizeOfElement, NumElements);
+
+			FRDGBufferRef VerticesOutputBuffer = CreateEmptyBuffer(GraphBuilder, sizeof(FVector4f), NumVertices);
+			uint32 Divisor = 3;
+			FRDGBufferRef TrianglesOutputBuffer = CreateEmptyBuffer(GraphBuilder, sizeof(FIntVector), FMath::DivideAndRoundUp(NumVertices, Divisor));
+			FRDGBufferRef DensityBuffer = CreateAndFillBuffer(
+				GraphBuilder,
+				DensityData.GetData(),
+				sizeof(float),
+				DensityMapSize,
+				TEXT("Density Data Buffer")
+			);
+
 			// Create an UAV Buffer to enable RW on GPU Buffer
-			FRDGBufferUAVRef OutputBufferUAV = CreateUAVBuffer(GraphBuilder, OutputBuffer);
-			
+
+			FRDGBufferUAVRef VerticesOutputBufferUAV = GraphBuilder.CreateUAV(VerticesOutputBuffer, PF_R32_UINT);
+			FRDGBufferUAVRef TrianglesOutputBufferUAV = GraphBuilder.CreateUAV(TrianglesOutputBuffer);
+			FRDGBufferUAVRef DensityBufferUAV = GraphBuilder.CreateUAV(DensityBuffer, PF_R32_FLOAT);
+
+			AddClearUAVPass(GraphBuilder, VerticesOutputBufferUAV, 0);
 			// Allocate parameters
 			FMyComputeShader::FParameters* PassParameters = GraphBuilder.AllocParameters<FMyComputeShader::FParameters>();
-			PassParameters->OutputBufferUAV = OutputBufferUAV;
-			PassParameters->TriangleTableBufferSRV = TriangleTableBufferSRV;
+
+			PassParameters->Vertices = VerticesOutputBufferUAV;
+			PassParameters->Triangles = TrianglesOutputBufferUAV;
+			PassParameters->DensityMap = DensityBufferUAV;
 
 			// Dispatch the compute shader using FComputeShaderUtils
 			// Number of Thread Groups
-			FIntVector NumOfThreadGroups(NumElements, 1, 1);
+			const uint32 ThreadGroupSize = 8;
+			FIntVector NumOfThreadGroups(
+				FMath::DivideAndRoundUp(NumVertices, ThreadGroupSize),
+				FMath::DivideAndRoundUp(NumVertices, ThreadGroupSize),
+				FMath::DivideAndRoundUp(NumVertices, ThreadGroupSize));
+			
+			FIntVector ConstNumOfThreadGroups(
+				1,
+				1,
+				1);
 
 			FComputeShaderUtils::AddPass(
 				GraphBuilder,
 				RDG_EVENT_NAME("ComputeShaderPass"),
 				MyComputeShader,
 				PassParameters,
-				NumOfThreadGroups
+				ConstNumOfThreadGroups
 			);
 
-			FRHIGPUBufferReadback* ReadbackBuffer = new FRHIGPUBufferReadback(TEXT("ComputeReadback"));
-			AddEnqueueCopyPass(GraphBuilder, ReadbackBuffer, OutputBuffer, SizeOfElement * NumElements); // Copy (n) bytes (uint32)
+			FRHIGPUBufferReadback* VerticesReadbackBuffer = new FRHIGPUBufferReadback(TEXT("Vertices Compute Readback"));
+			AddEnqueueCopyPass(GraphBuilder, VerticesReadbackBuffer, VerticesOutputBuffer, sizeof(FVector4f) * NumVertices); // Copy (n) bytes (uint32)
 
 			// Execute the RDG Graph
 			GraphBuilder.Execute();
 
-			CheckReadbackBuffer(ReadbackBuffer, SizeOfElement, NumElements);
+			FComputeShaderReadback::ProcessVertexData(World, VerticesReadbackBuffer, sizeof(FVector4f), NumVertices);
 		});
 }
 
 // Create the buffer to hold data 
-FRDGBufferRef FMyComputeShaderWrapper::CreateOutputBuffer(FRDGBuilder& GraphBuilder, const uint32& SizeOfElement, const uint32& NumOfElements)
+FRDGBufferRef FMyComputeShaderWrapper::CreateEmptyBuffer(FRDGBuilder& GraphBuilder, const uint32& SizeOfElement, const uint32& NumOfElements)
 {
 	return GraphBuilder.CreateBuffer(
 		FRDGBufferDesc::CreateStructuredDesc(SizeOfElement, NumOfElements),
 		TEXT("OutputBuffer")
 	);
 }
-// Create the UAV on the buffer to enable read/write capabilities
-FRDGBufferUAVRef FMyComputeShaderWrapper::CreateUAVBuffer(FRDGBuilder& GraphBuilder, const FRDGBufferRef& OutputBuffer)
-{
-	return GraphBuilder.CreateUAV(OutputBuffer, PF_R32_UINT);
-}
 
-FRDGBufferSRVRef FMyComputeShaderWrapper::CreateTriangleTableSRV(FRDGBuilder& GraphBuilder)
+FRDGBufferRef FMyComputeShaderWrapper::CreateAndFillBuffer(FRDGBuilder& GraphBuilder, const void* Data, const uint32& SizeOfElement, const uint32& NumOfElements, const TCHAR* DebugName)
 {
-	// Flatten TriangleTable
-	TArray<int32> FlatTriangleTable = GetFlatTriangleArray();
-	// Upload Triangle Table
-	FRDGBufferRef TriangleTableBuffer = UploadBuffer(GraphBuilder, FlatTriangleTable, FString("Triangle Table"));
-	// Create Triangle Table SRV
-	return GraphBuilder.CreateSRV(TriangleTableBuffer);
-}
-
-// Upload Buffer data to GPU
-FRDGBufferRef FMyComputeShaderWrapper::UploadBuffer(FRDGBuilder& GraphBuilder, TArray<int32>& Table ,const FString& Name)
-{
-	int32 NumOfElements = Table.Num();
-
-	FRDGBufferRef TableBuffer = GraphBuilder.CreateBuffer(
-		FRDGBufferDesc::CreateStructuredDesc(sizeof(int32), NumOfElements),
-		*Name
+	FRDGBufferDesc Desc = FRDGBufferDesc::CreateBufferDesc(
+		SizeOfElement,
+		NumOfElements
+	);
+	Desc.Usage = EBufferUsageFlags::UnorderedAccess | EBufferUsageFlags::ShaderResource;
+	
+	FRDGBufferRef Buffer = GraphBuilder.CreateBuffer(
+		Desc,
+		DebugName
 	);
 
-	GraphBuilder.QueueBufferUpload(TableBuffer, Table.GetData(), NumOfElements * 4);
-	return TableBuffer;
-}
+	GraphBuilder.QueueBufferUpload(
+		Buffer,
+		Data,
+		SizeOfElement * NumOfElements,
+		ERDGInitialDataFlags::NoCopy
+	);
 
-void FMyComputeShaderWrapper::CheckReadbackBuffer(FRHIGPUBufferReadback* ReadbackBuffer, const uint32& ElementSize, const uint32& TotalElements)
-{
-	uint32 TotalBufferSize = ElementSize * TotalElements;
-	AsyncTask(ENamedThreads::ActualRenderingThread, [this, ReadbackBuffer, TotalElements, ElementSize ,TotalBufferSize]()
-		{
-			if (ReadbackBuffer->IsReady())
-			{
-				int32* Data = (int32*)ReadbackBuffer->Lock(TotalBufferSize);
-				AsyncTask(ENamedThreads::GameThread, [Data, TotalElements]()
-					{
-						for (uint32 x = 0; x < TotalElements; x++)
-						{
-							UE_LOG(LogTemp, Warning, TEXT("Data: %d"), Data[x]);
-						}
-					});
-				ReadbackBuffer->Unlock();
-				delete ReadbackBuffer;
-			}
-			else
-			{
-				AsyncTask(ENamedThreads::GameThread, [this, ReadbackBuffer, ElementSize, TotalElements]()
-					{
-						UE_LOG(LogTemp, Warning, TEXT("Buffer readback not ready...retrying..."));
-						FTimerHandle TimerHandle;
-						GWorld->GetTimerManager().SetTimer(
-							TimerHandle,
-							[this, ReadbackBuffer, ElementSize, TotalElements]()
-							{
-								CheckReadbackBuffer(ReadbackBuffer, ElementSize, TotalElements);
-							},
-							0.05f, // Retry delay in seconds
-							false // Do not loop, just retry once
-						);
-					});
-			}
-		});
-}
-
-TArray<int32> FMyComputeShaderWrapper::GetFlatTriangleArray()
-{
-	TArray<int32> FlattenedArray;
-	for (const TArray<int32>& Row : ULandmassManager::Get()->GetTriangulationTable())
-	{
-		FlattenedArray.Append(Row);
-	}
-	return FlattenedArray;
+	return Buffer;
 }

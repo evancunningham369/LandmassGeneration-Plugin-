@@ -39,5 +39,5 @@ private:
 	void Click(const FInputActionValue& Value);
 
 	void TraceUnderCrosshairs();
-	void CalculateHit(const FHitResult& HitResult, const FVector& Direction);
+	void CalculateHit(const FHitResult& HitResult);
 };

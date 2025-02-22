@@ -9,17 +9,12 @@ public:
 		return Instance;
 	}
 
-	void Dispatch(uint32 SizeOfElement, uint32 NumElements);
-	void CopyValueToGPU(uint32 ValueToCopy);
+	void Dispatch(UWorld* World, uint32 NumVertices, const TArray<float>& DensityData);
 private:
 	FMyComputeShaderWrapper() = default;
 	~FMyComputeShaderWrapper() = default;
+	TArray<FVector3f> VerticesResults;
 
-	bool bDataUploaded = false;
-	void CheckReadbackBuffer(class FRHIGPUBufferReadback* ReadbackBuffer, const uint32& ElementSize, const uint32& TotalElements);
-	FRDGBufferRef CreateOutputBuffer(FRDGBuilder& GraphBuilder, const uint32& SizeOfElement, const uint32& NumOfElements);
-	FRDGBufferUAVRef CreateUAVBuffer(FRDGBuilder& GraphBuilder, const FRDGBufferRef& OutputBuffer);
-	FRDGBufferSRVRef CreateTriangleTableSRV(FRDGBuilder& GraphBuilder);
-	FRDGBufferRef UploadBuffer(FRDGBuilder& GraphBuilder, TArray<int32>& Table, const FString& Name);
-	TArray<int32> GetFlatTriangleArray();
+	FRDGBufferRef CreateEmptyBuffer(FRDGBuilder& GraphBuilder, const uint32& SizeOfElement, const uint32& NumOfElements);
+	FRDGBufferRef CreateAndFillBuffer(FRDGBuilder& GraphBuilder, const void* Data, const uint32& SizeOfElement, const uint32& NumOfElements, const TCHAR* DebugName);
 };
