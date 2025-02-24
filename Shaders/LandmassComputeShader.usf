@@ -2,26 +2,138 @@
 #include "/Engine/Public/Platform.ush"
 #include "LandmassTables.ush"
 
-RWStructuredBuffer<float4> Vertices : register(u0); // register u is used for Read/Write buffers
-RWStructuredBuffer<uint3> Triangles : register(u1); 
-RWStructuredBuffer<float> DensityMap : register(u2); 
+struct Triangle
+{
+    float3 vertex1;
+    float3 vertex2;
+    float3 vertex3;
+};
 
-[numthreads(8, 8, 8)] // Define threads per group
-void MainCS(uint3 ThreadId : SV_DispatchThreadID, uint3 GroupId : SV_GroupID)
+RWStructuredBuffer<Triangle> Triangles : register(u1); 
+RWTexture3D<float> DensityMap : register(u2);
+RWStructuredBuffer<uint> Counter : register(u3);
+
+//Number of vertices
+[numthreads(2, 2, 2)]
+void FillDensity(uint3 ThreadId: SV_DispatchThreadID, uint3 GroupId : SV_GroupID)
+{
+    if(ThreadId.z == 1)
+    {
+        DensityMap[ThreadId] = 1.f;
+    }
+    else
+    {
+        DensityMap[ThreadId] = -1.f;
+    }
+}
+// Number of cubes
+[numthreads(1, 1, 1)] // Define threads per group
+void MarchingCube(uint3 ThreadId : SV_DispatchThreadID, uint3 GroupId : SV_GroupID)
 {   
-    
     int x = ThreadId.x;
     int y = ThreadId.y;
     int z = ThreadId.z;
     
-    //uint index = 0;
-    // Group Id is the coordinates(0 or 7)
-    int GlobalIndex = (x + (y * 8) + (z * 64));
+    int GlobalIndex = (x + (y * 2) + (z * 4));
 
-    // Swap y and z
-    //Vertices[GlobalIndex] = float4(x, z, y, DensityMap[GlobalIndex]);
     
     
+    //Index for Counter
+    uint Index;
+    
+    
+    // Group Id is the coordinates(0 or 7)
+    
+    //Vertices[GlobalIndex] = float4(x, y, z, DensityMap[ThreadId]);
+    
+    //corner position
+    
+    int3 cornerPos[8];
+    
+    cornerPos[0] = ThreadId + int3(0, 0, 0);
+    cornerPos[1] = ThreadId + int3(1, 0, 0);
+    cornerPos[2] = ThreadId + int3(1, 0, 1);
+    cornerPos[3] = ThreadId + int3(0, 0, 1);
+    cornerPos[4] = ThreadId + int3(0, 1, 0);
+    cornerPos[5] = ThreadId + int3(1, 1, 0);
+    cornerPos[6] = ThreadId + int3(1, 1, 1);
+    cornerPos[7] = ThreadId + int3(0, 1, 1);
+    
+    int CubeIndex = 0;
+    for (int i = 0; i < 8; i++)
+    {
+        if (DensityMap[cornerPos[i]] > 0)
+        {
+            CubeIndex |= (1U << i);
+        }
+    }
+    
+    
+    if (CubeIndex == 0 || CubeIndex == 255)
+    {
+        
+        Triangle DummyTri;
+        // Get the mid-point between each vertex
+        DummyTri.vertex1 = float3(-1,-1,-1);
+        DummyTri.vertex2 = float3(-1,-1,-1);
+        DummyTri.vertex3 = float3(-1,-1,-1);
+
+        Triangles[Index] = DummyTri;
+        
+        return;
+    }
+    /*
+    Triangle IndexTri;
+        
+    IndexTri.vertex1 = float3(TriangleTable[CubeIndex][0], 0, 0);
+    IndexTri.vertex2 = float3(TriangleTable[CubeIndex][1], 0, 0);
+    IndexTri.vertex3 = float3(TriangleTable[CubeIndex][2], 0, 0);
+
+    Triangles[Index] = IndexTri;
+    */
+     
+    for (int j = 0; j < 16; j += 3)
+    {
+        if (TriangleTable[CubeIndex][j] == -1)
+        {
+            break;
+        }
+                
+        //First Edge that is intersected
+        int edge1 = TriangleTable[CubeIndex][j];
+        // Vertices for that edge
+        float3 edgeVertex1 = EdgeTable[edge1][0];
+        float3 edgeVertex2 = EdgeTable[edge1][1];
+        
+        int edge2 = TriangleTable[CubeIndex][j + 1];
+        float3 edgeVertex3 = EdgeTable[edge2][0];
+        float3 edgeVertex4 = EdgeTable[edge2][1];
+        
+        int edge3 = TriangleTable[CubeIndex][j + 2];
+        float3 edgeVertex5 = EdgeTable[edge3][0];
+        float3 edgeVertex6 = EdgeTable[edge3][1];
+        
+        
+        // Get the actual positions
+        float3 Vert1 = ThreadId + edgeVertex1;
+        float3 Vert2 = ThreadId + edgeVertex2;
+        
+        float3 Vert3 = ThreadId + edgeVertex3;
+        float3 Vert4 = ThreadId + edgeVertex4;
+        
+        float3 Vert5 = ThreadId + edgeVertex5;
+        float3 Vert6 = ThreadId + edgeVertex6;
+        
+        Triangle Tri;
+        // Get the mid-point between each vertex
+        Tri.vertex1 = (Vert1 + Vert2) / 2;
+        Tri.vertex2 = (Vert3 + Vert4) / 2;
+        Tri.vertex3 = (Vert5 + Vert6) / 2;
+
+        InterlockedAdd(Counter[0], 1, Index);
+        Triangles[Index] = Tri;
+        
+    }
 }
 
 

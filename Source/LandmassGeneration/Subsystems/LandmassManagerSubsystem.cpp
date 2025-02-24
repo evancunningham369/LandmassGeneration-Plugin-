@@ -67,7 +67,6 @@ void ULandmassManagerSubsystem::CreateMap()
 	UWorld* World = GetWorld();
 	uint32 NumVertices = Width * Width * Height;
 	DensityData.SetNum(NumVertices);
-	PopulateDensityData();
 	FMyComputeShaderWrapper::Get().Dispatch(World, NumVertices , DensityData);
 }
 

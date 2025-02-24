@@ -1,6 +1,7 @@
 #include "LandmassCompute.h"
 #include "CoreMinimal.h"
 #include "LandmassGeneration/Shaders/LandmassComputeShader.h"
+#include "LandmassGeneration/LandmassStructs.h"
 
 #include "RenderGraphUtils.h"           // RDG utility functions
 #include "RenderGraphResources.h"       // RDG buffer and texture handling
@@ -12,73 +13,107 @@
 
 void FMyComputeShaderWrapper::Dispatch(UWorld* World, uint32 NumVertices, const TArray<float>& DensityData)
 {
-	//UE_LOG(LogTemp, Warning, TEXT("Num Vertices: %d"), NumVertices)
-	//UE_LOG(LogTemp, Warning, TEXT("Num Density: %d"), DensityData.Num())
 	ENQUEUE_RENDER_COMMAND(MyRenderCommand)(
 		[World, this, NumVertices, DensityData](FRHICommandListImmediate& RHICmdList)
 		{
-			uint32 DensityMapSize = DensityData.Num();
-			// Get the global shader map
-			TShaderMapRef<FMyComputeShader> MyComputeShader(GetGlobalShaderMap(GMaxRHIFeatureLevel));
-
-			// Use RDG for GPU resource management
 			FRDGBuilder GraphBuilder(RHICmdList);
-			// Create GPU Buffer
+			FRDGTextureUAVRef DensityUAV;
 
-			FRDGBufferRef VerticesOutputBuffer = CreateEmptyBuffer(GraphBuilder, sizeof(FVector4f), NumVertices);
-			uint32 Divisor = 3;
-			FRDGBufferRef TrianglesOutputBuffer = CreateEmptyBuffer(GraphBuilder, sizeof(FIntVector), FMath::DivideAndRoundUp(NumVertices, Divisor));
-			FRDGBufferRef DensityBuffer = CreateAndFillBuffer(
-				GraphBuilder,
-				DensityData.GetData(),
-				sizeof(float),
-				DensityMapSize,
-				TEXT("Density Data Buffer")
-			);
+			AddDensityCubesShaderPass(World, GraphBuilder, DensityData, DensityUAV);
 
-			// Create an UAV Buffer to enable RW on GPU Buffer
+			AddMarchingCubesShaderPass(World, GraphBuilder, DensityUAV, NumVertices);
 
-			FRDGBufferUAVRef VerticesOutputBufferUAV = GraphBuilder.CreateUAV(VerticesOutputBuffer, PF_R32_UINT);
-			FRDGBufferUAVRef TrianglesOutputBufferUAV = GraphBuilder.CreateUAV(TrianglesOutputBuffer);
-			FRDGBufferUAVRef DensityBufferUAV = GraphBuilder.CreateUAV(DensityBuffer, PF_R32_FLOAT);
-
-			AddClearUAVPass(GraphBuilder, VerticesOutputBufferUAV, 0);
-			// Allocate parameters
-			FMyComputeShader::FParameters* PassParameters = GraphBuilder.AllocParameters<FMyComputeShader::FParameters>();
-
-			PassParameters->Vertices = VerticesOutputBufferUAV;
-			PassParameters->Triangles = TrianglesOutputBufferUAV;
-			PassParameters->DensityMap = DensityBufferUAV;
-
-			// Dispatch the compute shader using FComputeShaderUtils
-			// Number of Thread Groups
-			const uint32 ThreadGroupSize = 8;
-			FIntVector NumOfThreadGroups(
-				FMath::DivideAndRoundUp(NumVertices, ThreadGroupSize),
-				FMath::DivideAndRoundUp(NumVertices, ThreadGroupSize),
-				FMath::DivideAndRoundUp(NumVertices, ThreadGroupSize));
-			
-			FIntVector ConstNumOfThreadGroups(
-				1,
-				1,
-				1);
-
-			FComputeShaderUtils::AddPass(
-				GraphBuilder,
-				RDG_EVENT_NAME("ComputeShaderPass"),
-				MyComputeShader,
-				PassParameters,
-				ConstNumOfThreadGroups
-			);
-
-			FRHIGPUBufferReadback* VerticesReadbackBuffer = new FRHIGPUBufferReadback(TEXT("Vertices Compute Readback"));
-			AddEnqueueCopyPass(GraphBuilder, VerticesReadbackBuffer, VerticesOutputBuffer, sizeof(FVector4f) * NumVertices); // Copy (n) bytes (uint32)
-
-			// Execute the RDG Graph
-			GraphBuilder.Execute();
-
-			FComputeShaderReadback::ProcessVertexData(World, VerticesReadbackBuffer, sizeof(FVector4f), NumVertices);
 		});
+}
+
+void FMyComputeShaderWrapper::AddMarchingCubesShaderPass(UWorld* World, FRDGBuilder& GraphBuilder, const FRDGTextureUAVRef& DensityUAV, const uint32& NumVertices)
+{
+
+	TShaderMapRef<FMarchingCubesShader> MarchingCubesShader(GetGlobalShaderMap(GMaxRHIFeatureLevel));
+
+	// Create GPU Buffer
+
+	const uint32 Divisor = 3;
+	uint32 NumTriangles = 2;
+	FRDGBufferRef TrianglesOutputBuffer = CreateEmptyBuffer(GraphBuilder, sizeof(FTriangle), NumTriangles);
+	FRDGBufferRef CounterOutputBuffer = CreateEmptyBuffer(GraphBuilder, sizeof(uint32), 1);
+	
+	// Create an UAV Buffer to enable RW on GPU Buffer
+	FRDGBufferUAVRef TrianglesOutputBufferUAV = GraphBuilder.CreateUAV(TrianglesOutputBuffer);
+	FRDGBufferUAVRef CounterOutputBufferUAV = GraphBuilder.CreateUAV(CounterOutputBuffer, PF_R32_UINT);
+
+	AddClearUAVPass(GraphBuilder, CounterOutputBufferUAV, 0);
+	// Allocate parameters
+	FMarchingCubesShader::FParameters* MarchingCubesParams = GraphBuilder.AllocParameters<FMarchingCubesShader::FParameters>();
+	MarchingCubesParams->Triangles = TrianglesOutputBufferUAV;
+	MarchingCubesParams->DensityMap = DensityUAV;
+	MarchingCubesParams->Counter = CounterOutputBufferUAV;
+	FIntVector ConstMarchingCubesThreadGroups(
+		1,
+		1,
+		1);
+
+	FComputeShaderUtils::AddPass(
+		GraphBuilder,
+		RDG_EVENT_NAME("Marching Cubes Shader Pass"),
+		MarchingCubesShader,
+		MarchingCubesParams,
+		ConstMarchingCubesThreadGroups
+	);
+
+	FRHIGPUBufferReadback* TriangleReadbackBuffer = new FRHIGPUBufferReadback(TEXT("Triangle Compute Readback"));
+	//FRHIGPUBufferReadback* CounterReadbackBuffer = new FRHIGPUBufferReadback(TEXT("Counter Compute Readback"));
+	AddEnqueueCopyPass(GraphBuilder, TriangleReadbackBuffer, TrianglesOutputBuffer, sizeof(FTriangle) * NumTriangles); // Copy (n) bytes (uint32)
+	//AddEnqueueCopyPass(GraphBuilder, CounterReadbackBuffer, CounterOutputBuffer, sizeof(uint32)); // Copy (n) bytes (uint32)
+	
+	GraphBuilder.Execute();
+
+	FComputeShaderReadback::ProcessTriangleData(World, TriangleReadbackBuffer, sizeof(FTriangle), NumTriangles);
+	//FComputeShaderReadback::ProcessCounterData(World, CounterReadbackBuffer, sizeof(uint32), 1);
+}
+
+void FMyComputeShaderWrapper::AddDensityCubesShaderPass(UWorld* World, FRDGBuilder& GraphBuilder, const TArray<float>& DensityData, FRDGTextureUAVRef& DensityUAV)
+{
+	TShaderMapRef<FDensityComputeShader> DensityShader(GetGlobalShaderMap(GMaxRHIFeatureLevel));
+
+	// Use RDG for GPU resource management
+	// Create GPU Buffer
+
+	FRDGTextureRef DensityBuffer = CreateTextureBuffer(
+		GraphBuilder,
+		DensityData.GetData(),
+		sizeof(float),
+		DensityData.Num(),
+		TEXT("Density Data Buffer")
+	);
+
+	// Create an UAV Buffer to enable RW on GPU Buffer
+	DensityUAV = GraphBuilder.CreateUAV(FRDGTextureUAVDesc(DensityBuffer));
+
+	// Allocate parameters
+	FDensityComputeShader::FParameters* DensityParams = GraphBuilder.AllocParameters<FDensityComputeShader::FParameters>();
+	DensityParams->DensityMap = DensityUAV;
+
+	// Dispatch the compute shader using FComputeShaderUtils
+	// Number of Thread Groups
+	const uint32 ThreadGroupSize = 8;
+	/*FIntVector DensityThreadGroups(
+		FMath::DivideAndRoundUp(NumVertices, ThreadGroupSize),
+		FMath::DivideAndRoundUp(NumVertices, ThreadGroupSize),
+		FMath::DivideAndRoundUp(NumVertices, ThreadGroupSize));*/
+
+	FIntVector ConstDensityThreadGroups(
+		1,
+		1,
+		1);
+
+	FComputeShaderUtils::AddPass(
+		GraphBuilder,
+		RDG_EVENT_NAME("Density Shader Pass"),
+		DensityShader,
+		DensityParams,
+		ConstDensityThreadGroups
+	);
 }
 
 // Create the buffer to hold data 
@@ -90,25 +125,21 @@ FRDGBufferRef FMyComputeShaderWrapper::CreateEmptyBuffer(FRDGBuilder& GraphBuild
 	);
 }
 
-FRDGBufferRef FMyComputeShaderWrapper::CreateAndFillBuffer(FRDGBuilder& GraphBuilder, const void* Data, const uint32& SizeOfElement, const uint32& NumOfElements, const TCHAR* DebugName)
+FRDGTextureRef FMyComputeShaderWrapper::CreateTextureBuffer(FRDGBuilder& GraphBuilder, const void* Data, const uint32& SizeOfElement, const uint32& NumOfElements, const TCHAR* DebugName)
 {
-	FRDGBufferDesc Desc = FRDGBufferDesc::CreateBufferDesc(
-		SizeOfElement,
-		NumOfElements
+	FRDGTextureDesc Desc = FRDGTextureDesc::Create3D(
+		FIntVector(2,2,2),
+		PF_R32_FLOAT,
+		FClearValueBinding::None,
+		TexCreate_UAV | TexCreate_ShaderResource
 	);
-	Desc.Usage = EBufferUsageFlags::UnorderedAccess | EBufferUsageFlags::ShaderResource;
 	
-	FRDGBufferRef Buffer = GraphBuilder.CreateBuffer(
+	FRDGTexture* Texture = GraphBuilder.CreateTexture(
 		Desc,
 		DebugName
 	);
+	
 
-	GraphBuilder.QueueBufferUpload(
-		Buffer,
-		Data,
-		SizeOfElement * NumOfElements,
-		ERDGInitialDataFlags::NoCopy
-	);
 
-	return Buffer;
+	return Texture;
 }

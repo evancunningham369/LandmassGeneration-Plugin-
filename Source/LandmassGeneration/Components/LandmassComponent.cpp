@@ -191,7 +191,7 @@ void ULandmassComponent::MarchCubeOptimized(
 			// Get the 2 base vectors that make up that edge
 			const FVector& EdgeOffset1 = CurrentEdge[0];
 			const FVector& EdgeOffset2 = CurrentEdge[1];
-
+				
 			// Get the actual world position of the vertices that make up that edge
 			vert1 = position + EdgeOffset1;
 			vert2 = position + EdgeOffset2;

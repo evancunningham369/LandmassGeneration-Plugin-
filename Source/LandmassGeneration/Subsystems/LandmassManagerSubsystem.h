@@ -29,10 +29,10 @@ private:
 	TArray<float> DensityData;
 
 	// Number of vertices wide
-	int32 Width = 8;
+	int32 Width = 2;
 
 	// Number of vertices high
-	int32 Height = 8;
+	int32 Height = 2;
 
 	// Number of chunks in the X direction
 	UPROPERTY(EditAnywhere)

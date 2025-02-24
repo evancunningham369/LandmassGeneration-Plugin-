@@ -53,6 +53,9 @@
     <ClCompile Include="..\..\Source\LandmassGeneration\LandmassGeneration.h">
       <Filter>Source\LandmassGeneration</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\LandmassGeneration\LandmassStructs.h">
+      <Filter>Source\LandmassGeneration</Filter>
+    </ClCompile>
     <Filter Include="Source\LandmassGeneration\Character">
       <UniqueIdentifier>{54DEBA80-26AA-3DFA-AE48-A68D727FCCD9}</UniqueIdentifier>
     </Filter>

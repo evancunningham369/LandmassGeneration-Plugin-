@@ -1,4 +1,0 @@
-Breadcrumbs 'RHIThread'
- - EnqueueCopy(OutputBuffer)
- - FRDGBuilder::Execute
- - Frame 124
