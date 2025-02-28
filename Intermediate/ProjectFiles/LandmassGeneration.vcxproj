@@ -280,19 +280,10 @@
     <ClCompile Include="..\..\Source\LandmassGeneration\Character\PlayerCharacter.h">
       <AdditionalIncludeDirectories>$(ClCompile_AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
-    <ClCompile Include="..\..\Source\LandmassGeneration\Components\LandmassComponent.cpp">
+    <ClCompile Include="..\..\Source\LandmassGeneration\Components\TerrainGeneratorComponent.cpp">
       <AdditionalIncludeDirectories>$(ClCompile_AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
-    <ClCompile Include="..\..\Source\LandmassGeneration\Components\LandmassComponent.h">
-      <AdditionalIncludeDirectories>$(ClCompile_AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-    </ClCompile>
-    <ClCompile Include="..\..\Source\LandmassGeneration\Compute\ComputeShaderReadback.h">
-      <AdditionalIncludeDirectories>$(ClCompile_AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-    </ClCompile>
-    <ClCompile Include="..\..\Source\LandmassGeneration\Compute\LandmassCompute.cpp">
-      <AdditionalIncludeDirectories>$(ClCompile_AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-    </ClCompile>
-    <ClCompile Include="..\..\Source\LandmassGeneration\Compute\LandmassCompute.h">
+    <ClCompile Include="..\..\Source\LandmassGeneration\Components\TerrainGeneratorComponent.h">
       <AdditionalIncludeDirectories>$(ClCompile_AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <ClCompile Include="..\..\Source\LandmassGeneration\Default\MyDefaultPawn.cpp">
@@ -314,12 +305,6 @@
       <AdditionalIncludeDirectories>$(ClCompile_AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <ClCompile Include="..\..\Source\LandmassGeneration\Landmass\LandmassTypes.h">
-      <AdditionalIncludeDirectories>$(ClCompile_AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-    </ClCompile>
-    <ClCompile Include="..\..\Source\LandmassGeneration\Manager\LandmassManager.cpp">
-      <AdditionalIncludeDirectories>$(ClCompile_AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-    </ClCompile>
-    <ClCompile Include="..\..\Source\LandmassGeneration\Manager\LandmassManager.h">
       <AdditionalIncludeDirectories>$(ClCompile_AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <ClCompile Include="..\..\Source\LandmassGeneration\Shaders\LandmassComputeShader.cpp">

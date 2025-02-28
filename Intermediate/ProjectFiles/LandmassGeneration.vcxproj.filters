@@ -68,23 +68,11 @@
     <Filter Include="Source\LandmassGeneration\Components">
       <UniqueIdentifier>{3328E09F-56B2-3278-92FC-953DDA3FED0A}</UniqueIdentifier>
     </Filter>
-    <ClCompile Include="..\..\Source\LandmassGeneration\Components\LandmassComponent.cpp">
+    <ClCompile Include="..\..\Source\LandmassGeneration\Components\TerrainGeneratorComponent.cpp">
       <Filter>Source\LandmassGeneration\Components</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\LandmassGeneration\Components\LandmassComponent.h">
+    <ClCompile Include="..\..\Source\LandmassGeneration\Components\TerrainGeneratorComponent.h">
       <Filter>Source\LandmassGeneration\Components</Filter>
-    </ClCompile>
-    <Filter Include="Source\LandmassGeneration\Compute">
-      <UniqueIdentifier>{F318A056-D07A-3190-A9E3-D129B36ADC27}</UniqueIdentifier>
-    </Filter>
-    <ClCompile Include="..\..\Source\LandmassGeneration\Compute\ComputeShaderReadback.h">
-      <Filter>Source\LandmassGeneration\Compute</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Source\LandmassGeneration\Compute\LandmassCompute.cpp">
-      <Filter>Source\LandmassGeneration\Compute</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Source\LandmassGeneration\Compute\LandmassCompute.h">
-      <Filter>Source\LandmassGeneration\Compute</Filter>
     </ClCompile>
     <Filter Include="Source\LandmassGeneration\Default">
       <UniqueIdentifier>{BB8AB25E-6EB5-3B2F-8C29-019D655ED57D}</UniqueIdentifier>
@@ -115,15 +103,6 @@
     </ClCompile>
     <ClCompile Include="..\..\Source\LandmassGeneration\Landmass\LandmassTypes.h">
       <Filter>Source\LandmassGeneration\Landmass</Filter>
-    </ClCompile>
-    <Filter Include="Source\LandmassGeneration\Manager">
-      <UniqueIdentifier>{1B4BE1B2-5208-3340-A098-D05F4DDBD7AD}</UniqueIdentifier>
-    </Filter>
-    <ClCompile Include="..\..\Source\LandmassGeneration\Manager\LandmassManager.cpp">
-      <Filter>Source\LandmassGeneration\Manager</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Source\LandmassGeneration\Manager\LandmassManager.h">
-      <Filter>Source\LandmassGeneration\Manager</Filter>
     </ClCompile>
     <Filter Include="Source\LandmassGeneration\Shaders">
       <UniqueIdentifier>{05467C82-B4C8-394E-9D4A-A2B123D4C4AF}</UniqueIdentifier>

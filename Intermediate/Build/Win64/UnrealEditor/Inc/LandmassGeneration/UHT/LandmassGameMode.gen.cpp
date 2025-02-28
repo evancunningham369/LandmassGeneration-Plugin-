@@ -76,7 +76,6 @@ template<> LANDMASSGENERATION_API UClass* StaticClass<ALandmassGameMode>()
 {
 	return ALandmassGameMode::StaticClass();
 }
-ALandmassGameMode::ALandmassGameMode(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer) {}
 DEFINE_VTABLE_PTR_HELPER_CTOR(ALandmassGameMode);
 ALandmassGameMode::~ALandmassGameMode() {}
 // End Class ALandmassGameMode

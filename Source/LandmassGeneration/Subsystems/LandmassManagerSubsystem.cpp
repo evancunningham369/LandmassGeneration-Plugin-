@@ -2,99 +2,188 @@
 
 #include "LandmassManagerSubsystem.h"
 #include "LandmassGeneration/Landmass/Landmass.h"
-#include "LandmassGeneration/Components/LandmassComponent.h"
-#include "LandmassGeneration/Compute/LandmassCompute.h"
+#include "RenderGraphBuilder.h"         // Required for FRDGBuilder
+#include <LandmassGeneration/Shaders/LandmassComputeShader.h>
+#include <RenderGraphUtils.h>
 
-void ULandmassManagerSubsystem::SpawnChunks()
+int32 ULandmassManagerSubsystem::RequestTerrainGeneration(
+	const FTerrainGenerationParams& Params, 
+	TFunction<void(const TArray<FTriangle>&, uint32)> Callback)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Attemping to spawn Chunks..."));
-	UWorld* World = GetWorld();
-	// How far apart each Landmass should spawn from another
-	int32 TotalChunks = NumOfChunksX * NumOfChunksY * NumOfChunksZ;
+	int32 RequestId = NextRequestId++;
+	PendingCallbacks.Add(RequestId, Callback);
 
-	TArray<FVector> SpawnData;
-	SpawnData.SetNum(TotalChunks);
-	float OffsetAmount = ((Width - 1) * 100);
-	ParallelFor(TotalChunks, [&](int32 Index)
+	ENQUEUE_RENDER_COMMAND(TerrainGenerationCommand)(
+		[this, Params, RequestId](FRHICommandListImmediate& RHICmdList)
 		{
-			int32 x = Index / (NumOfChunksY * NumOfChunksZ);
-			int32 yz = Index % (NumOfChunksY * NumOfChunksZ);
-			int32 y = yz / NumOfChunksZ;
-			int32 z = yz % NumOfChunksZ;
+			FRDGBuilder GraphBuilder(RHICmdList);
 
-			FVector Offset = FVector(x, y, 0) * OffsetAmount;
-			SpawnData[Index] = Offset;
+			// Density pass
+			FRDGTextureUAVRef DensityUAV;
+			AddDensityCubesShaderPass(Params, GetWorld(), GraphBuilder, DensityUAV);
 
-		}, EParallelForFlags::Unbalanced);
+			// Marching cubes pass
+			uint32 NumTriangles = (Params.Width * Params.Depth) / 2; // You should calculate this based on your needs
+			FRDGBufferRef TrianglesOutputBuffer = CreateEmptyBuffer(GraphBuilder, sizeof(FTriangle), NumTriangles);
+			FRDGBufferRef CounterOutputBuffer = CreateEmptyBuffer(GraphBuilder, sizeof(uint32), 1);
 
-	static const int32 BATCH_SIZE = 10;
-	Async(EAsyncExecution::ThreadPool, [this, World, SpawnData]
-		{
-			for (int32 i = 0; i < SpawnData.Num(); i += BATCH_SIZE)
-			{
-				AsyncTask(ENamedThreads::GameThread, [this, World, SpawnData, i]
+			FRDGBufferUAVRef TrianglesOutputBufferUAV = GraphBuilder.CreateUAV(TrianglesOutputBuffer);
+			FRDGBufferUAVRef CounterOutputBufferUAV = GraphBuilder.CreateUAV(CounterOutputBuffer, PF_R32_UINT);
+
+			AddClearUAVPass(GraphBuilder, CounterOutputBufferUAV, 0);
+
+			TShaderMapRef<FMarchingCubesShader> MarchingCubesShader(GetGlobalShaderMap(GMaxRHIFeatureLevel));
+			FMarchingCubesShader::FParameters* MarchingCubesParams = GraphBuilder.AllocParameters<FMarchingCubesShader::FParameters>();
+			MarchingCubesParams->Triangles = TrianglesOutputBufferUAV;
+			MarchingCubesParams->DensityMap = DensityUAV;
+			MarchingCubesParams->Counter = CounterOutputBufferUAV;
+			MarchingCubesParams->VolumeSize = FUintVector3(Params.Width, Params.Height, Params.Depth);
+
+
+			const uint32 ThreadGroupSize = 8;
+
+			FIntVector MarchingCubesThreadGroups(
+				FMath::DivideAndRoundUp(Params.Width, ThreadGroupSize),
+				FMath::DivideAndRoundUp(Params.Width, ThreadGroupSize),
+				1);
+
+
+			FComputeShaderUtils::AddPass(
+				GraphBuilder,
+				RDG_EVENT_NAME("Marching Cubes Shader Pass"),
+				MarchingCubesShader,
+				MarchingCubesParams,
+				MarchingCubesThreadGroups
+			);
+
+			// Setup readback
+			FRHIGPUBufferReadback* TriangleReadbackBuffer = new FRHIGPUBufferReadback(TEXT("Triangle Compute Readback"));
+			AddEnqueueCopyPass(GraphBuilder, TriangleReadbackBuffer, TrianglesOutputBuffer, sizeof(FTriangle) * NumTriangles);
+
+			// Add completion handler
+				GraphBuilder.AddPass(
+					RDG_EVENT_NAME("ProcessTerrainData"),
+					ERDGPassFlags::None,
+					[this, NumTriangles ,TriangleReadbackBuffer, RequestId](FRHICommandListImmediate& RHICmdList)
 					{
-						int32 EndIndex = FMath::Min(i + BATCH_SIZE, SpawnData.Num());
-						for (int32 j = i; j < EndIndex; j++)
-						{
-							UE_LOG(LogTemp, Warning, TEXT("Attemping to spawn chunk..."))
-
-								ALandmass* Landmass = World->SpawnActor<ALandmass>(ALandmass::StaticClass(), SpawnData[j], FRotator::ZeroRotator);
-							if (Landmass)
-							{
-								SpawnedLandmasses.Add(Landmass);
-								Landmass->GetLandmassComponent()->CreateMesh(Width, Height);
-							}
-						}
+						// Process the readback with the correct parameters
+						ProcessShaderReadback(TriangleReadbackBuffer, RequestId, sizeof(FTriangle), NumTriangles);
 					});
-			}
+
+			// Execute graph ONCE, at the end
+			GraphBuilder.Execute();
+		});
+
+	return RequestId;
+}
+
+void ULandmassManagerSubsystem::ProcessShaderReadback(FRHIGPUBufferReadback* ReadbackBuffer, int32 RequestId, uint32 ElementSize, uint32 TotalElements)
+{
+	TFunction<void(const TArray<FTriangle>&, uint32)>* Callback = PendingCallbacks.Find(RequestId);
+	if (!Callback)
+	{
+		delete ReadbackBuffer;
+		return;
+	}
+
+	TArray<FTriangle> Triangles;
+	uint32 TriangleCount = 0;
+
+	if (ReadbackBuffer)
+	{
+		void* Data = ReadbackBuffer->Lock(TotalElements * ElementSize);
+		if (Data)
+		{
+			FTriangle* TriangleData = static_cast<FTriangle*>(Data);
+
+			TriangleCount = TotalElements;
+
+			Triangles.SetNum(TotalElements);
+			FMemory::Memcpy(Triangles.GetData(), TriangleData, TriangleCount * ElementSize);
+
+			ReadbackBuffer->Unlock();
+		}
+		delete ReadbackBuffer;
+	}
+	AsyncTask(ENamedThreads::GameThread, [Triangles, TriangleCount, Callback, this, RequestId]()
+		{
+			(*Callback)(Triangles, TriangleCount);
+
+			PendingCallbacks.Remove(RequestId);
 		});
 }
 
-void ULandmassManagerSubsystem::SpawnChunk()
+void ULandmassManagerSubsystem::AddDensityCubesShaderPass(
+	const FTerrainGenerationParams& Params, UWorld* World, 
+	FRDGBuilder& GraphBuilder, 
+	FRDGTextureUAVRef& DensityUAV)
 {
-	UWorld* World = GetWorld();
+	TShaderMapRef<FDensityComputeShader> DensityShader(GetGlobalShaderMap(GMaxRHIFeatureLevel));
 
-	ALandmass* Landmass = World->SpawnActor<ALandmass>(ALandmass::StaticClass(), FVector(0, 0, 0), FRotator::ZeroRotator);
-	if (Landmass->GetLandmassComponent())
-	{
-		Landmass->GetLandmassComponent()->CreateMesh(Width, Height);
-	}
+	// Use RDG for GPU resource management
+	// Create GPU Buffer
+
+	FRDGTextureRef DensityBuffer = CreateTextureBuffer(
+		GraphBuilder,
+		DensityData.GetData(),
+		sizeof(float),
+		Params.NumVertices,
+		TEXT("Density Data Buffer")
+	);
+
+	// Create an UAV Buffer to enable RW on GPU Buffer
+	DensityUAV = GraphBuilder.CreateUAV(FRDGTextureUAVDesc(DensityBuffer));
+
+	// Allocate parameters
+	FDensityComputeShader::FParameters* DensityParams = GraphBuilder.AllocParameters<FDensityComputeShader::FParameters>();
+	DensityParams->DensityMap = DensityUAV;
+
+
+	// Dispatch the compute shader using FComputeShaderUtils
+	// Number of Thread Groups
+	const uint32 ThreadGroupSize = 8;
+
+	FIntVector DensityThreadGroups(
+		FMath::DivideAndRoundUp(Params.Width , ThreadGroupSize),
+		FMath::DivideAndRoundUp(Params.Width , ThreadGroupSize),
+		1);
+
+	FComputeShaderUtils::AddPass(
+		GraphBuilder,
+		RDG_EVENT_NAME("Density Shader Pass"),
+		DensityShader,
+		DensityParams,
+		DensityThreadGroups
+	);
 }
 
-void ULandmassManagerSubsystem::CreateMap()
+FRDGBufferRef ULandmassManagerSubsystem::CreateEmptyBuffer(FRDGBuilder& GraphBuilder, const uint32& SizeOfElement, const uint32& NumOfElements)
 {
-	UWorld* World = GetWorld();
-	uint32 NumVertices = Width * Width * Height;
-	DensityData.SetNum(NumVertices);
-	FMyComputeShaderWrapper::Get().Dispatch(World, NumVertices , DensityData);
+	return GraphBuilder.CreateBuffer(
+		FRDGBufferDesc::CreateStructuredDesc(SizeOfElement, NumOfElements),
+		TEXT("OutputBuffer")
+	);
 }
 
-void ULandmassManagerSubsystem::PopulateDensityData()
+FRDGTextureRef ULandmassManagerSubsystem::CreateTextureBuffer(FRDGBuilder& GraphBuilder, const void* Data, const uint32& SizeOfElement, const uint32& NumOfElements, const TCHAR* DebugName)
 {
-	TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("Populate Terrain Map"))
-		for (int32 x = 0; x < Width; x++)
-		{
-			for (int32 z = 0; z < Height; z++)
-			{
-				for (int32 y = 0; y < Width; y++)
-				{
-					//UE_LOG(LogTemp, Warning, TEXT("Data: %s"), *FVector(x, y, z).ToString())
-					if (z == Height - 1)
-					{
-						SetTerrainMapValue(x, y, z, 1.f);
-					}
-					else
-					{
-						SetTerrainMapValue(x, y, z, -1.f);
-					}
-				}
-			}
-		}
+	FRDGTextureDesc Desc = FRDGTextureDesc::Create3D(
+		FIntVector(2, 2, 2),
+		PF_R32_FLOAT,
+		FClearValueBinding::None,
+		TexCreate_UAV | TexCreate_ShaderResource
+	);
+
+	FRDGTexture* Texture = GraphBuilder.CreateTexture(
+		Desc,
+		DebugName
+	);
+
+
+
+	return Texture;
 }
 
-void ULandmassManagerSubsystem::SetTerrainMapValue(int32 X, int32 Y, int32 Z, float Value)
+void ULandmassManagerSubsystem::CancelRequest(int32 RequestId)
 {
-	int32 Index = X + (Z * Width) + (Y * Width * Height);
-	DensityData[Index] = Value;
 }

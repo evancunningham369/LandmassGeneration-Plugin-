@@ -13,14 +13,12 @@ class LANDMASSGENERATION_API ALandmass : public AActor
 	
 public:	
 	ALandmass();
+
+	class UTerrainGeneratorComponent* TerrainGeneratorComponent;
 protected:
 	virtual void BeginPlay() override;
 
 public:	
 	virtual void Tick(float DeltaTime) override;
 
-	UPROPERTY(VisibleAnywhere)
-	class ULandmassComponent* LandmassComponent;
-
-	ULandmassComponent* GetLandmassComponent();
 };

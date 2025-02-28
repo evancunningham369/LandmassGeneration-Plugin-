@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/WorldSubsystem.h"
+#include <LandmassGeneration/LandmassStructs.h>
 #include "LandmassManagerSubsystem.generated.h"
 
 /**
@@ -16,35 +17,22 @@ class LANDMASSGENERATION_API ULandmassManagerSubsystem : public UWorldSubsystem
 
 public:
 
-	void SpawnChunks();
-	void SpawnChunk();
-	void CreateMap();
+	int32 RequestTerrainGeneration(
+		const FTerrainGenerationParams& Params,
+		TFunction<void(const TArray<FTriangle>&, uint32)> Callback);
 
-	void PopulateDensityData();
-
-	void SetTerrainMapValue(int32 X, int32 Y, int32 Z, float Value);
+	void CancelRequest(int32 RequestId);
 
 private:
-	// Density Map
 	TArray<float> DensityData;
+	void ProcessShaderReadback(FRHIGPUBufferReadback* ReadbackBuffer, int32 RequestId, uint32 ElementSize, uint32 TotalElements);
 
-	// Number of vertices wide
-	int32 Width = 2;
+	TMap<int32, TFunction<void(const TArray<FTriangle>&, uint32)>> PendingCallbacks;
 
-	// Number of vertices high
-	int32 Height = 2;
+	int32 NextRequestId;
 
-	// Number of chunks in the X direction
-	UPROPERTY(EditAnywhere)
-	int32 NumOfChunksX = 2;
+	void AddDensityCubesShaderPass(const FTerrainGenerationParams& Params, UWorld* World, FRDGBuilder& GraphBuilder, FRDGTextureUAVRef& DensityUAV);
 
-	// Number of chunks in the Y direction
-	UPROPERTY(EditAnywhere)
-	int32 NumOfChunksY = 2;
-
-	// Number of chunks in the Z direction
-	int32 NumOfChunksZ = 1;
-
-	UPROPERTY()
-	TArray<TWeakObjectPtr<class ALandmass>> SpawnedLandmasses;
+	FRDGBufferRef CreateEmptyBuffer(FRDGBuilder& GraphBuilder, const uint32& SizeOfElement, const uint32& NumOfElements);
+	FRDGTextureRef CreateTextureBuffer(FRDGBuilder& GraphBuilder, const void* Data, const uint32& SizeOfElement, const uint32& NumOfElements, const TCHAR* DebugName);
 };

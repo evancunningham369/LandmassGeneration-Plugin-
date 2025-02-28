@@ -13,11 +13,12 @@ UCLASS()
 class LANDMASSGENERATION_API ALandmassGameMode : public AGameMode
 {
 	GENERATED_BODY()
-	
+public:
+	ALandmassGameMode();
+
+
 protected:
 	virtual void BeginPlay() override;
-
-	void SpawnLandmasses();
-
+private:
 
 };

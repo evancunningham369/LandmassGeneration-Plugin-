@@ -24,8 +24,6 @@ public: \
 
 
 #define FID_Users_donut_Documents_LandmassGenerationUnreal_LandmassGeneration_Source_LandmassGeneration_GameModes_LandmassGameMode_h_15_ENHANCED_CONSTRUCTORS \
-	/** Standard constructor, called after all reflected properties have been initialized */ \
-	NO_API ALandmassGameMode(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get()); \
 private: \
 	/** Private move- and copy-constructors, should never be used */ \
 	ALandmassGameMode(ALandmassGameMode&&); \
@@ -33,7 +31,7 @@ private: \
 public: \
 	DECLARE_VTABLE_PTR_HELPER_CTOR(NO_API, ALandmassGameMode); \
 	DEFINE_VTABLE_PTR_HELPER_CTOR_CALLER(ALandmassGameMode); \
-	DEFINE_DEFAULT_OBJECT_INITIALIZER_CONSTRUCTOR_CALL(ALandmassGameMode) \
+	DEFINE_DEFAULT_CONSTRUCTOR_CALL(ALandmassGameMode) \
 	NO_API virtual ~ALandmassGameMode();
 
 

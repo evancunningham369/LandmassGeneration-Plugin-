@@ -3,21 +3,15 @@
 
 #include "LandmassGameMode.h"
 #include "LandmassGeneration/Subsystems/LandmassManagerSubsystem.h"
+#include <LandmassGeneration/Components/TerrainGeneratorComponent.h>
+
+ALandmassGameMode::ALandmassGameMode()
+{
+	
+}
 
 void ALandmassGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	if (UWorld* World = GetWorld())
-	{
-		if (ULandmassManagerSubsystem* LandmassSubsystem = World->GetSubsystem<ULandmassManagerSubsystem>())
-		{
-			//LandmassSubsystem->SpawnChunks();
-			LandmassSubsystem->CreateMap();
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Failed to get subsystem"))
-		}
-	}
 }

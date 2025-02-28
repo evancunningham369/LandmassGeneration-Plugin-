@@ -11,7 +11,6 @@ void EmptyLinkFunctionForGeneratedCodeLandmassManagerSubsystem() {}
 
 // Begin Cross Module References
 ENGINE_API UClass* Z_Construct_UClass_UWorldSubsystem();
-LANDMASSGENERATION_API UClass* Z_Construct_UClass_ALandmass_NoRegister();
 LANDMASSGENERATION_API UClass* Z_Construct_UClass_ULandmassManagerSubsystem();
 LANDMASSGENERATION_API UClass* Z_Construct_UClass_ULandmassManagerSubsystem_NoRegister();
 UPackage* Z_Construct_UPackage__Script_LandmassGeneration();
@@ -36,52 +35,13 @@ struct Z_Construct_UClass_ULandmassManagerSubsystem_Statics
 		{ "IncludePath", "Subsystems/LandmassManagerSubsystem.h" },
 		{ "ModuleRelativePath", "Subsystems/LandmassManagerSubsystem.h" },
 	};
-	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_NumOfChunksX_MetaData[] = {
-		{ "Category", "LandmassManagerSubsystem" },
-#if !UE_BUILD_SHIPPING
-		{ "Comment", "// Number of chunks in the X direction\n" },
-#endif
-		{ "ModuleRelativePath", "Subsystems/LandmassManagerSubsystem.h" },
-#if !UE_BUILD_SHIPPING
-		{ "ToolTip", "Number of chunks in the X direction" },
-#endif
-	};
-	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_NumOfChunksY_MetaData[] = {
-		{ "Category", "LandmassManagerSubsystem" },
-#if !UE_BUILD_SHIPPING
-		{ "Comment", "// Number of chunks in the Y direction\n" },
-#endif
-		{ "ModuleRelativePath", "Subsystems/LandmassManagerSubsystem.h" },
-#if !UE_BUILD_SHIPPING
-		{ "ToolTip", "Number of chunks in the Y direction" },
-#endif
-	};
-	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_SpawnedLandmasses_MetaData[] = {
-		{ "ModuleRelativePath", "Subsystems/LandmassManagerSubsystem.h" },
-	};
 #endif // WITH_METADATA
-	static const UECodeGen_Private::FIntPropertyParams NewProp_NumOfChunksX;
-	static const UECodeGen_Private::FIntPropertyParams NewProp_NumOfChunksY;
-	static const UECodeGen_Private::FWeakObjectPropertyParams NewProp_SpawnedLandmasses_Inner;
-	static const UECodeGen_Private::FArrayPropertyParams NewProp_SpawnedLandmasses;
-	static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
 	static UObject* (*const DependentSingletons[])();
 	static constexpr FCppClassTypeInfoStatic StaticCppClassTypeInfo = {
 		TCppClassTypeTraits<ULandmassManagerSubsystem>::IsAbstract,
 	};
 	static const UECodeGen_Private::FClassParams ClassParams;
 };
-const UECodeGen_Private::FIntPropertyParams Z_Construct_UClass_ULandmassManagerSubsystem_Statics::NewProp_NumOfChunksX = { "NumOfChunksX", nullptr, (EPropertyFlags)0x0040000000000001, UECodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(ULandmassManagerSubsystem, NumOfChunksX), METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_NumOfChunksX_MetaData), NewProp_NumOfChunksX_MetaData) };
-const UECodeGen_Private::FIntPropertyParams Z_Construct_UClass_ULandmassManagerSubsystem_Statics::NewProp_NumOfChunksY = { "NumOfChunksY", nullptr, (EPropertyFlags)0x0040000000000001, UECodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(ULandmassManagerSubsystem, NumOfChunksY), METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_NumOfChunksY_MetaData), NewProp_NumOfChunksY_MetaData) };
-const UECodeGen_Private::FWeakObjectPropertyParams Z_Construct_UClass_ULandmassManagerSubsystem_Statics::NewProp_SpawnedLandmasses_Inner = { "SpawnedLandmasses", nullptr, (EPropertyFlags)0x0004000000000000, UECodeGen_Private::EPropertyGenFlags::WeakObject, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, 0, Z_Construct_UClass_ALandmass_NoRegister, METADATA_PARAMS(0, nullptr) };
-const UECodeGen_Private::FArrayPropertyParams Z_Construct_UClass_ULandmassManagerSubsystem_Statics::NewProp_SpawnedLandmasses = { "SpawnedLandmasses", nullptr, (EPropertyFlags)0x0044000000000000, UECodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(ULandmassManagerSubsystem, SpawnedLandmasses), EArrayPropertyFlags::None, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_SpawnedLandmasses_MetaData), NewProp_SpawnedLandmasses_MetaData) };
-const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UClass_ULandmassManagerSubsystem_Statics::PropPointers[] = {
-	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ULandmassManagerSubsystem_Statics::NewProp_NumOfChunksX,
-	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ULandmassManagerSubsystem_Statics::NewProp_NumOfChunksY,
-	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ULandmassManagerSubsystem_Statics::NewProp_SpawnedLandmasses_Inner,
-	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ULandmassManagerSubsystem_Statics::NewProp_SpawnedLandmasses,
-};
-static_assert(UE_ARRAY_COUNT(Z_Construct_UClass_ULandmassManagerSubsystem_Statics::PropPointers) < 2048);
 UObject* (*const Z_Construct_UClass_ULandmassManagerSubsystem_Statics::DependentSingletons[])() = {
 	(UObject* (*)())Z_Construct_UClass_UWorldSubsystem,
 	(UObject* (*)())Z_Construct_UPackage__Script_LandmassGeneration,
@@ -93,11 +53,11 @@ const UECodeGen_Private::FClassParams Z_Construct_UClass_ULandmassManagerSubsyst
 	&StaticCppClassTypeInfo,
 	DependentSingletons,
 	nullptr,
-	Z_Construct_UClass_ULandmassManagerSubsystem_Statics::PropPointers,
+	nullptr,
 	nullptr,
 	UE_ARRAY_COUNT(DependentSingletons),
 	0,
-	UE_ARRAY_COUNT(Z_Construct_UClass_ULandmassManagerSubsystem_Statics::PropPointers),
+	0,
 	0,
 	0x001000A0u,
 	METADATA_PARAMS(UE_ARRAY_COUNT(Z_Construct_UClass_ULandmassManagerSubsystem_Statics::Class_MetaDataParams), Z_Construct_UClass_ULandmassManagerSubsystem_Statics::Class_MetaDataParams)
@@ -123,10 +83,10 @@ ULandmassManagerSubsystem::~ULandmassManagerSubsystem() {}
 struct Z_CompiledInDeferFile_FID_Users_donut_Documents_LandmassGenerationUnreal_LandmassGeneration_Source_LandmassGeneration_Subsystems_LandmassManagerSubsystem_h_Statics
 {
 	static constexpr FClassRegisterCompiledInInfo ClassInfo[] = {
-		{ Z_Construct_UClass_ULandmassManagerSubsystem, ULandmassManagerSubsystem::StaticClass, TEXT("ULandmassManagerSubsystem"), &Z_Registration_Info_UClass_ULandmassManagerSubsystem, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(ULandmassManagerSubsystem), 2692142904U) },
+		{ Z_Construct_UClass_ULandmassManagerSubsystem, ULandmassManagerSubsystem::StaticClass, TEXT("ULandmassManagerSubsystem"), &Z_Registration_Info_UClass_ULandmassManagerSubsystem, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(ULandmassManagerSubsystem), 1112842515U) },
 	};
 };
-static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_Users_donut_Documents_LandmassGenerationUnreal_LandmassGeneration_Source_LandmassGeneration_Subsystems_LandmassManagerSubsystem_h_606234265(TEXT("/Script/LandmassGeneration"),
+static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_Users_donut_Documents_LandmassGenerationUnreal_LandmassGeneration_Source_LandmassGeneration_Subsystems_LandmassManagerSubsystem_h_3667946631(TEXT("/Script/LandmassGeneration"),
 	Z_CompiledInDeferFile_FID_Users_donut_Documents_LandmassGenerationUnreal_LandmassGeneration_Source_LandmassGeneration_Subsystems_LandmassManagerSubsystem_h_Statics::ClassInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_Users_donut_Documents_LandmassGenerationUnreal_LandmassGeneration_Source_LandmassGeneration_Subsystems_LandmassManagerSubsystem_h_Statics::ClassInfo),
 	nullptr, 0,
 	nullptr, 0);

@@ -5,11 +5,9 @@
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include <Kismet/GameplayStatics.h>
-#include "LandmassGeneration/Components/LandmassComponent.h"
 #include "LandmassGeneration/Landmass/Landmass.h"
-#include "LandmassGeneration/Manager/LandmassManager.h"
 #include "LandmassGeneration/DebugMacros.h"
-#include "LandmassGeneration/Compute/LandmassCompute.h"
+#include <LandmassGeneration/Components/TerrainGeneratorComponent.h>
 
 #define LANDMASS_CHANNEL ECC_GameTraceChannel1
 
@@ -102,7 +100,7 @@ void AMyDefaultPawn::CalculateHit(const FHitResult& HitResult)
 	float ExplosionRadiusCopy = ExplosionRadius;
 
 	TArray<FHitResult> HitResults;
-	TSet<ULandmassComponent*> UniqueLandmasses;
+	TSet<UTerrainGeneratorComponent*> UniqueLandmasses;
 
 	FVector HitLocation = HitResult.ImpactPoint;
 	if (GetWorld()->SweepMultiByChannel(
@@ -116,12 +114,7 @@ void AMyDefaultPawn::CalculateHit(const FHitResult& HitResult)
 	{
 		for (const FHitResult& Result : HitResults)
 		{
-			ULandmassComponent* LandmassComponent = Cast<ULandmassComponent>(Result.GetComponent());
-			if (LandmassComponent)
-			{
-				UniqueLandmasses.Add(LandmassComponent);
-			}
+			// To-Do
 		}
 	}
-	ULandmassManager::Get()->DeformLandmasses(UniqueLandmasses.Array(), HitLocation, ExplosionRadiusCopy);
 }

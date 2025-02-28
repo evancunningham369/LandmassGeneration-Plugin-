@@ -9,15 +9,26 @@ struct Triangle
     float3 vertex3;
 };
 
+uint3 VolumeSize;
+
 RWStructuredBuffer<Triangle> Triangles : register(u1); 
 RWTexture3D<float> DensityMap : register(u2);
 RWStructuredBuffer<uint> Counter : register(u3);
 
+float3 GetInterpolatedVertex(float3 VertA, float3 VertB, float ValueA, float ValueB)
+{
+    float t = (0 - ValueA) / (ValueB - ValueA);
+    float3 VertexPosition = VertA + t * (VertB - VertA);
+    
+    VertexPosition.z = 0.5f;
+    return VertexPosition;
+}
+
 //Number of vertices
-[numthreads(2, 2, 2)]
+[numthreads(8, 8, 8)]
 void FillDensity(uint3 ThreadId: SV_DispatchThreadID, uint3 GroupId : SV_GroupID)
 {
-    if(ThreadId.z == 1)
+    if (ThreadId.z == 1)
     {
         DensityMap[ThreadId] = 1.f;
     }
@@ -26,19 +37,21 @@ void FillDensity(uint3 ThreadId: SV_DispatchThreadID, uint3 GroupId : SV_GroupID
         DensityMap[ThreadId] = -1.f;
     }
 }
+
 // Number of cubes
-[numthreads(1, 1, 1)] // Define threads per group
+[numthreads(8, 8, 8)] // Define threads per group
 void MarchingCube(uint3 ThreadId : SV_DispatchThreadID, uint3 GroupId : SV_GroupID)
 {   
+    if (any(ThreadId >= VolumeSize - 1))
+    {
+        return;
+    }
+    
     int x = ThreadId.x;
     int y = ThreadId.y;
     int z = ThreadId.z;
     
-    int GlobalIndex = (x + (y * 2) + (z * 4));
-
-    
-    
-    //Index for Counter
+    //Index for Atomic Counter
     uint Index;
     
     
@@ -47,7 +60,7 @@ void MarchingCube(uint3 ThreadId : SV_DispatchThreadID, uint3 GroupId : SV_Group
     //Vertices[GlobalIndex] = float4(x, y, z, DensityMap[ThreadId]);
     
     //corner position
-    
+     
     int3 cornerPos[8];
     
     cornerPos[0] = ThreadId + int3(0, 0, 0);
@@ -72,25 +85,16 @@ void MarchingCube(uint3 ThreadId : SV_DispatchThreadID, uint3 GroupId : SV_Group
     if (CubeIndex == 0 || CubeIndex == 255)
     {
         
-        Triangle DummyTri;
+        //Triangle DummyTri;
         // Get the mid-point between each vertex
-        DummyTri.vertex1 = float3(-1,-1,-1);
-        DummyTri.vertex2 = float3(-1,-1,-1);
-        DummyTri.vertex3 = float3(-1,-1,-1);
+        //DummyTri.vertex1 = float3(-1,-1,-1);
+        //DummyTri.vertex2 = float3(-1,-1,-1);
+        //DummyTri.vertex3 = float3(-1,-1,-1);
 
-        Triangles[Index] = DummyTri;
+        //Triangles[Index] = DummyTri;
         
         return;
     }
-    /*
-    Triangle IndexTri;
-        
-    IndexTri.vertex1 = float3(TriangleTable[CubeIndex][0], 0, 0);
-    IndexTri.vertex2 = float3(TriangleTable[CubeIndex][1], 0, 0);
-    IndexTri.vertex3 = float3(TriangleTable[CubeIndex][2], 0, 0);
-
-    Triangles[Index] = IndexTri;
-    */
      
     for (int j = 0; j < 16; j += 3)
     {
@@ -101,38 +105,26 @@ void MarchingCube(uint3 ThreadId : SV_DispatchThreadID, uint3 GroupId : SV_Group
                 
         //First Edge that is intersected
         int edge1 = TriangleTable[CubeIndex][j];
-        // Vertices for that edge
-        float3 edgeVertex1 = EdgeTable[edge1][0];
-        float3 edgeVertex2 = EdgeTable[edge1][1];
+        // Corners for that edge
+        int Corner1 = cornerIndexAFromEdge[edge1];
+        int Corner2 = cornerIndexBFromEdge[edge1];
         
         int edge2 = TriangleTable[CubeIndex][j + 1];
-        float3 edgeVertex3 = EdgeTable[edge2][0];
-        float3 edgeVertex4 = EdgeTable[edge2][1];
+        int Corner3 = cornerIndexAFromEdge[edge2];
+        int Corner4 = cornerIndexBFromEdge[edge2];
         
         int edge3 = TriangleTable[CubeIndex][j + 2];
-        float3 edgeVertex5 = EdgeTable[edge3][0];
-        float3 edgeVertex6 = EdgeTable[edge3][1];
-        
-        
-        // Get the actual positions
-        float3 Vert1 = ThreadId + edgeVertex1;
-        float3 Vert2 = ThreadId + edgeVertex2;
-        
-        float3 Vert3 = ThreadId + edgeVertex3;
-        float3 Vert4 = ThreadId + edgeVertex4;
-        
-        float3 Vert5 = ThreadId + edgeVertex5;
-        float3 Vert6 = ThreadId + edgeVertex6;
+        int Corner5 = cornerIndexAFromEdge[edge3];
+        int Corner6 = cornerIndexBFromEdge[edge3];
         
         Triangle Tri;
         // Get the mid-point between each vertex
-        Tri.vertex1 = (Vert1 + Vert2) / 2;
-        Tri.vertex2 = (Vert3 + Vert4) / 2;
-        Tri.vertex3 = (Vert5 + Vert6) / 2;
-
+        Tri.vertex1 = GetInterpolatedVertex(cornerPos[Corner1], cornerPos[Corner2], DensityMap[cornerPos[Corner1]], DensityMap[cornerPos[Corner2]]);
+        Tri.vertex2 = GetInterpolatedVertex(cornerPos[Corner3], cornerPos[Corner4], DensityMap[cornerPos[Corner3]], DensityMap[cornerPos[Corner4]]);
+        Tri.vertex3 = GetInterpolatedVertex(cornerPos[Corner5], cornerPos[Corner6], DensityMap[cornerPos[Corner5]], DensityMap[cornerPos[Corner6]]);
+        
         InterlockedAdd(Counter[0], 1, Index);
         Triangles[Index] = Tri;
-        
     }
 }
 
