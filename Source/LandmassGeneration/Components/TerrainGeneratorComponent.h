@@ -10,26 +10,66 @@
 /**
  * 
  */
+
+USTRUCT(BlueprintType)
+struct FTerrainChunkInfo
+{
+    GENERATED_BODY()
+
+    UPROPERTY()
+    FIntVector ChunkCoords;
+
+    UPROPERTY()
+    class UTerrainChunkComponent* ChunkComponent;
+};
+
 UCLASS()
-class LANDMASSGENERATION_API UTerrainGeneratorComponent : public UDynamicMeshComponent
+class LANDMASSGENERATION_API UTerrainGeneratorComponent : public USceneComponent
 {
 	GENERATED_BODY()
 	
 public:
-	UTerrainGeneratorComponent();
+    UTerrainGeneratorComponent();
 
-	void GenerateTerrain(const FTerrainGenerationParams& Params);
+    virtual void BeginDestroy() override;
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
-	void OnComputeShaderComplete(const TArray<FTriangle>& Triangles, uint32 TriangleCount);
-	void DrawTriangle();
+    /** Generate terrain with the given parameters */
+    void GenerateTerrain(const FTerrainGenerationParams& Params);
+
+    /** Called when compute shader completes */
+    void OnComputeShaderComplete(const TArray<FTriangle>& Triangles, uint32 TriangleCount);
+
+    /** The maximum number of triangles to generate */
+    UPROPERTY(EditAnywhere, Category = "Terrain Generation")
+    int32 MaxTriangleCount = 500000;
+
+    /** The size of each chunk in voxels */
+    UPROPERTY(EditAnywhere, Category = "Terrain Generation", meta = (ClampMin = "8", ClampMax = "64"))
+    int32 ChunkSize = 32;
+
+    bool bEnableDebugVisualization = false;
 
 private:
-	FDynamicMesh3 Mesh;
+    /** Create chunks based on terrain parameters */
+    void CreateChunks(const FTerrainGenerationParams& Params);
 
-	FTerrainGenerationParams TerrainParams;
+    /** Distribute triangles to appropriate chunks */
+    void DistributeTrianglesToChunks(const TArray<FTriangle>& Triangles, uint32 TriangleCount);
 
-	UPROPERTY()
-	class ULandmassManagerSubsystem* ShaderSubsystem;
+    /** Calculate which chunk a point belongs to */
+    FIntVector GetChunkCoordsForPoint(const FVector& Point) const;
 
-	int32 CurrentGenerationRequestId;
+    FTerrainGenerationParams TerrainParams;
+
+    UPROPERTY()
+    TArray<FTerrainChunkInfo> ChunkInfos;
+
+    UPROPERTY()
+    class ULandmassManagerSubsystem* ShaderSubsystem;
+
+    int32 CurrentGenerationRequestId = INDEX_NONE;
+
+    /** Scale used to convert from voxel space to world space */
+    float WorldScale = 100.0f;
 };

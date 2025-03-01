@@ -68,6 +68,12 @@
     <Filter Include="Source\LandmassGeneration\Components">
       <UniqueIdentifier>{3328E09F-56B2-3278-92FC-953DDA3FED0A}</UniqueIdentifier>
     </Filter>
+    <ClCompile Include="..\..\Source\LandmassGeneration\Components\TerrainChunkComponent.cpp">
+      <Filter>Source\LandmassGeneration\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\LandmassGeneration\Components\TerrainChunkComponent.h">
+      <Filter>Source\LandmassGeneration\Components</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\LandmassGeneration\Components\TerrainGeneratorComponent.cpp">
       <Filter>Source\LandmassGeneration\Components</Filter>
     </ClCompile>

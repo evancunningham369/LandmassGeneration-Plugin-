@@ -42,6 +42,7 @@ void FillDensity(uint3 ThreadId: SV_DispatchThreadID, uint3 GroupId : SV_GroupID
 [numthreads(8, 8, 8)] // Define threads per group
 void MarchingCube(uint3 ThreadId : SV_DispatchThreadID, uint3 GroupId : SV_GroupID)
 {   
+
     if (any(ThreadId >= VolumeSize - 1))
     {
         return;
@@ -126,6 +127,7 @@ void MarchingCube(uint3 ThreadId : SV_DispatchThreadID, uint3 GroupId : SV_Group
         InterlockedAdd(Counter[0], 1, Index);
         Triangles[Index] = Tri;
     }
+
 }
 
 

@@ -34,5 +34,5 @@ private:
 	void AddDensityCubesShaderPass(const FTerrainGenerationParams& Params, UWorld* World, FRDGBuilder& GraphBuilder, FRDGTextureUAVRef& DensityUAV);
 
 	FRDGBufferRef CreateEmptyBuffer(FRDGBuilder& GraphBuilder, const uint32& SizeOfElement, const uint32& NumOfElements);
-	FRDGTextureRef CreateTextureBuffer(FRDGBuilder& GraphBuilder, const void* Data, const uint32& SizeOfElement, const uint32& NumOfElements, const TCHAR* DebugName);
+	FRDGTextureRef CreateTextureBuffer(FRDGBuilder& GraphBuilder, const FTerrainGenerationParams& Params, const void* Data, const uint32& SizeOfElement, const uint32& NumOfElements, const TCHAR* DebugName);
 };

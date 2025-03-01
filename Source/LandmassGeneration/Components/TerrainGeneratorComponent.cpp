@@ -1,90 +1,196 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "TerrainGeneratorComponent.h"
 #include <LandmassGeneration/Subsystems/LandmassManagerSubsystem.h>
 #include "LandmassGeneration/DebugMacros.h"
 #include <DynamicMesh/MeshNormals.h>
+#include "TerrainChunkComponent.h"
 
 using namespace UE::Geometry;
 
 UTerrainGeneratorComponent::UTerrainGeneratorComponent()
 {
-	SetComponentTickEnabled(false);
-
-	SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	SetCollisionObjectType(ECC_GameTraceChannel1);
 }
 
 void UTerrainGeneratorComponent::GenerateTerrain(const FTerrainGenerationParams& Params)
 {
-	TerrainParams = Params;
+    // Store the parameters
+    TerrainParams = Params;
 
-	if (!ShaderSubsystem)
-	{
-		ShaderSubsystem = GetWorld()->GetSubsystem<ULandmassManagerSubsystem>();
-	}
+    // Create the chunks
+    CreateChunks(TerrainParams);
 
-	if (CurrentGenerationRequestId != INDEX_NONE)
-	{
-		ShaderSubsystem->CancelRequest(CurrentGenerationRequestId);
-		CurrentGenerationRequestId = INDEX_NONE;
-	}
+    // Get the subsystem
+    if (!ShaderSubsystem)
+    {
+        ShaderSubsystem = GetWorld()->GetSubsystem<ULandmassManagerSubsystem>();
+    }
 
-	CurrentGenerationRequestId = ShaderSubsystem->RequestTerrainGeneration(
-		TerrainParams,
-		[this](const TArray<FTriangle>& Triangles, uint32 TriangleCount)
-		{
-			OnComputeShaderComplete(Triangles, TriangleCount);
-		});
+    // Cancel any existing requests
+    if (CurrentGenerationRequestId != INDEX_NONE)
+    {
+        ShaderSubsystem->CancelRequest(CurrentGenerationRequestId);
+        CurrentGenerationRequestId = INDEX_NONE;
+    }
+
+    // Request terrain generation
+    CurrentGenerationRequestId = ShaderSubsystem->RequestTerrainGeneration(
+        TerrainParams,
+        [this](const TArray<FTriangle>& Triangles, uint32 TriangleCount)
+        {
+            OnComputeShaderComplete(Triangles, TriangleCount);
+        }
+    );
+}
+
+void UTerrainGeneratorComponent::CreateChunks(const FTerrainGenerationParams& Params)
+{
+    // Clear existing chunks
+    for (FTerrainChunkInfo& ChunkInfo : ChunkInfos)
+    {
+        if (ChunkInfo.ChunkComponent)
+        {
+            ChunkInfo.ChunkComponent->DestroyComponent();
+        }
+    }
+    ChunkInfos.Empty();
+
+    // Calculate how many chunks we need in each dimension
+    int32 ChunksX = FMath::CeilToInt((float)Params.Width / ChunkSize);
+    int32 ChunksY = FMath::CeilToInt((float)Params.Depth / ChunkSize);
+    int32 ChunksZ = FMath::CeilToInt((float)Params.Height / ChunkSize);
+
+    UE_LOG(LogTemp, Warning, TEXT("Creating %d x %d x %d chunks"), ChunksX, ChunksY, ChunksZ);
+
+    // Create chunks
+    for (int32 X = 0; X < ChunksX; X++)
+    {
+        for (int32 Y = 0; Y < ChunksY; Y++)
+        {
+            for (int32 Z = 0; Z < ChunksZ; Z++)
+            {
+                FIntVector ChunkCoords(X, Y, Z);
+
+                // Create a component for this chunk
+                FString ChunkName = FString::Printf(TEXT("Chunk_%d_%d_%d"), X, Y, Z);
+                UTerrainChunkComponent* ChunkComponent = NewObject<UTerrainChunkComponent>(GetOwner(), *ChunkName);
+
+                // Set up the component
+                ChunkComponent->SetChunkCoords(ChunkCoords);
+                ChunkComponent->SetupAttachment(this);
+                ChunkComponent->RegisterComponent();
+
+                // Position the chunk in world space
+                FVector ChunkPosition(
+                    X * ChunkSize * WorldScale,
+                    Y * ChunkSize * WorldScale,
+                    Z * ChunkSize * WorldScale
+                );
+                ChunkComponent->SetRelativeLocation(ChunkPosition);
+                DRAW_POINT_PERM(ChunkPosition, FColor::Red);
+                // Store the chunk info
+                FTerrainChunkInfo ChunkInfo;
+                ChunkInfo.ChunkCoords = ChunkCoords;
+                ChunkInfo.ChunkComponent = ChunkComponent;
+                ChunkInfos.Add(ChunkInfo);
+            }
+        }
+    }
 }
 
 void UTerrainGeneratorComponent::OnComputeShaderComplete(const TArray<FTriangle>& Triangles, uint32 TriangleCount)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Shader Completed!"));
-	UE_LOG(LogTemp, Warning, TEXT("Triangle Count: %d"), TriangleCount);
+    UE_LOG(LogTemp, Warning, TEXT("Shader Completed!"));
+    UE_LOG(LogTemp, Warning, TEXT("Triangle Count: %d"), TriangleCount);
 
-	Mesh.Clear();
-	for (int32 i = 0; i < Triangles.Num(); i++)
-	{
-		const FTriangle& Triangle = Triangles[i];
-		FVector Vertex1(Triangle.Vertex1 * 100);
-		FVector Vertex2(Triangle.Vertex2 * 100);
-		FVector Vertex3(Triangle.Vertex3 * 100);
-		UE_LOG(LogTemp, Warning, TEXT("Final Vertex1: %s"), *Triangle.Vertex1.ToString())
-		UE_LOG(LogTemp, Warning, TEXT("Final Vertex2: %s"), *Triangle.Vertex2.ToString())
-		UE_LOG(LogTemp, Warning, TEXT("Final Vertex3: %s"), *Triangle.Vertex3.ToString())
+    // Start timing the distribution process
+    double StartTime = FPlatformTime::Seconds();
 
-		DRAW_POINT_PERM(Vertex1, FColor::Blue);
-		DRAW_POINT_PERM(Vertex2, FColor::Green);
-		DRAW_POINT_PERM(Vertex3, FColor::Red);
+    // Distribute triangles to chunks
+    DistributeTrianglesToChunks(Triangles, TriangleCount);
 
-		DRAW_LINE_PERM(Vertex1, Vertex2);
-		DRAW_LINE_PERM(Vertex2, Vertex3);
-		DRAW_LINE_PERM(Vertex3, Vertex1);
+    // Measure and log performance
+    double EndTime = FPlatformTime::Seconds();
+    UE_LOG(LogTemp, Warning, TEXT("Triangle distribution took %f seconds"), EndTime - StartTime);
 
-
-		int32 VertexId1 = Mesh.AppendVertex(Vertex1);
-		int32 VertexId2 = Mesh.AppendVertex(Vertex2);
-		int32 VertexId3 = Mesh.AppendVertex(Vertex3);
-
-		Mesh.AppendTriangle(VertexId1, VertexId2, VertexId3);
-	}
-	FMeshNormals::QuickComputeVertexNormals(Mesh);
-	SetMesh(MoveTemp(Mesh));
-	
-	CurrentGenerationRequestId = INDEX_NONE;
+    // Clear the current generation request ID
+    CurrentGenerationRequestId = INDEX_NONE;
 }
 
-void UTerrainGeneratorComponent::DrawTriangle()
+void UTerrainGeneratorComponent::DistributeTrianglesToChunks(const TArray<FTriangle>& Triangles, uint32 TriangleCount)
 {
-	int32 Vertex1 = Mesh.AppendVertex(FVector(0, 0, 0));
-	int32 Vertex2 = Mesh.AppendVertex(FVector(100, 0, 0));
-	int32 Vertex3 = Mesh.AppendVertex(FVector(100, 100, 0));
+    // Create a map to hold triangles for each chunk
+    TMap<FIntVector, TArray<FTriangle>> ChunkTriangles;
 
-	DRAW_POINT_PERM(FVector(0, 0, 0), FColor::Red);
+    // Track how many triangles we process to respect the maximum
+    int32 ProcessedTriangles = 0;
 
-	Mesh.AppendTriangle(Vertex1, Vertex2, Vertex3);
+    // Process each triangle
+    for (int32 i = 0; i < Triangles.Num() && ProcessedTriangles < MaxTriangleCount; i++)
+    {
+        const FTriangle& Triangle = Triangles[i];
 
-	SetMesh(MoveTemp(Mesh));
+        // Convert to FVector to determine chunk
+        FVector Vertex1(Triangle.Vertex1);
+        FVector Vertex2(Triangle.Vertex2);
+        FVector Vertex3(Triangle.Vertex3);
+
+        // Find the average position to determine which chunk this triangle belongs to
+        FVector TriangleCenter = (Vertex1 + Vertex2 + Vertex3) / 3.0f;
+
+        // Get the chunk coordinates for this position
+        FIntVector ChunkCoords = GetChunkCoordsForPoint(TriangleCenter);
+
+        // Add the triangle to the appropriate chunk
+        if (!ChunkTriangles.Contains(ChunkCoords))
+        {
+            ChunkTriangles.Add(ChunkCoords, TArray<FTriangle>());
+        }
+        ChunkTriangles[ChunkCoords].Add(Triangle);
+
+        ProcessedTriangles++;
+    }
+
+    // Update each chunk with its triangles
+    for (auto& ChunkInfo : ChunkInfos)
+    {
+        TArray<FTriangle>* ChunkTriangleArray = ChunkTriangles.Find(ChunkInfo.ChunkCoords);
+
+        if (ChunkTriangleArray && ChunkTriangleArray->Num() > 0)
+        {
+            ChunkInfo.ChunkComponent->UpdateMesh(*ChunkTriangleArray, ChunkTriangleArray->Num());
+        }
+    }
+}
+
+FIntVector UTerrainGeneratorComponent::GetChunkCoordsForPoint(const FVector& Point) const
+{
+    // Convert point to chunk coordinates
+    int32 X = FMath::FloorToInt(Point.X / ChunkSize);
+    int32 Y = FMath::FloorToInt(Point.Y / ChunkSize);
+    int32 Z = FMath::FloorToInt(Point.Z / ChunkSize);
+
+    return FIntVector(X, Y, Z);
+}
+
+void UTerrainGeneratorComponent::BeginDestroy()
+{
+    if (CurrentGenerationRequestId != INDEX_NONE && ShaderSubsystem)
+    {
+        ShaderSubsystem->CancelRequest(CurrentGenerationRequestId);
+        CurrentGenerationRequestId = INDEX_NONE;
+    }
+
+    Super::BeginDestroy();
+}
+
+void UTerrainGeneratorComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    if (CurrentGenerationRequestId != INDEX_NONE && ShaderSubsystem)
+    {
+        ShaderSubsystem->CancelRequest(CurrentGenerationRequestId);
+        CurrentGenerationRequestId = INDEX_NONE;
+    }
+
+    Super::EndPlay(EndPlayReason);
 }

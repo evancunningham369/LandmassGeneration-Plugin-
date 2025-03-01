@@ -23,7 +23,7 @@ int32 ULandmassManagerSubsystem::RequestTerrainGeneration(
 			AddDensityCubesShaderPass(Params, GetWorld(), GraphBuilder, DensityUAV);
 
 			// Marching cubes pass
-			uint32 NumTriangles = (Params.Width * Params.Depth) / 2; // You should calculate this based on your needs
+			uint32 NumTriangles = (Params.Width - 1) * (Params.Depth - 1) * 2; // You should calculate this based on your needs
 			FRDGBufferRef TrianglesOutputBuffer = CreateEmptyBuffer(GraphBuilder, sizeof(FTriangle), NumTriangles);
 			FRDGBufferRef CounterOutputBuffer = CreateEmptyBuffer(GraphBuilder, sizeof(uint32), 1);
 
@@ -37,14 +37,14 @@ int32 ULandmassManagerSubsystem::RequestTerrainGeneration(
 			MarchingCubesParams->Triangles = TrianglesOutputBufferUAV;
 			MarchingCubesParams->DensityMap = DensityUAV;
 			MarchingCubesParams->Counter = CounterOutputBufferUAV;
-			MarchingCubesParams->VolumeSize = FUintVector3(Params.Width, Params.Height, Params.Depth);
+			MarchingCubesParams->VolumeSize = FUintVector3(Params.Width, Params.Depth, Params.Height);
 
 
 			const uint32 ThreadGroupSize = 8;
 
 			FIntVector MarchingCubesThreadGroups(
-				FMath::DivideAndRoundUp(Params.Width, ThreadGroupSize),
-				FMath::DivideAndRoundUp(Params.Width, ThreadGroupSize),
+				FMath::DivideAndRoundUp(Params.Width - 1, ThreadGroupSize),
+				FMath::DivideAndRoundUp(Params.Depth - 1, ThreadGroupSize),
 				1);
 
 
@@ -87,7 +87,6 @@ void ULandmassManagerSubsystem::ProcessShaderReadback(FRHIGPUBufferReadback* Rea
 	}
 
 	TArray<FTriangle> Triangles;
-	uint32 TriangleCount = 0;
 
 	if (ReadbackBuffer)
 	{
@@ -96,18 +95,18 @@ void ULandmassManagerSubsystem::ProcessShaderReadback(FRHIGPUBufferReadback* Rea
 		{
 			FTriangle* TriangleData = static_cast<FTriangle*>(Data);
 
-			TriangleCount = TotalElements;
+			size_t TotalSize = static_cast<size_t>(TotalElements) * static_cast<size_t>(ElementSize);;
 
 			Triangles.SetNum(TotalElements);
-			FMemory::Memcpy(Triangles.GetData(), TriangleData, TriangleCount * ElementSize);
+			FMemory::Memcpy(Triangles.GetData(), TriangleData, TotalSize);
 
 			ReadbackBuffer->Unlock();
 		}
 		delete ReadbackBuffer;
 	}
-	AsyncTask(ENamedThreads::GameThread, [Triangles, TriangleCount, Callback, this, RequestId]()
+	AsyncTask(ENamedThreads::GameThread, [Triangles, TotalElements, Callback, this, RequestId]()
 		{
-			(*Callback)(Triangles, TriangleCount);
+			(*Callback)(Triangles, TotalElements);
 
 			PendingCallbacks.Remove(RequestId);
 		});
@@ -125,6 +124,7 @@ void ULandmassManagerSubsystem::AddDensityCubesShaderPass(
 
 	FRDGTextureRef DensityBuffer = CreateTextureBuffer(
 		GraphBuilder,
+		Params,
 		DensityData.GetData(),
 		sizeof(float),
 		Params.NumVertices,
@@ -144,8 +144,8 @@ void ULandmassManagerSubsystem::AddDensityCubesShaderPass(
 	const uint32 ThreadGroupSize = 8;
 
 	FIntVector DensityThreadGroups(
-		FMath::DivideAndRoundUp(Params.Width , ThreadGroupSize),
-		FMath::DivideAndRoundUp(Params.Width , ThreadGroupSize),
+		FMath::DivideAndRoundUp(Params.Width, ThreadGroupSize),
+		FMath::DivideAndRoundUp(Params.Width, ThreadGroupSize),
 		1);
 
 	FComputeShaderUtils::AddPass(
@@ -165,10 +165,10 @@ FRDGBufferRef ULandmassManagerSubsystem::CreateEmptyBuffer(FRDGBuilder& GraphBui
 	);
 }
 
-FRDGTextureRef ULandmassManagerSubsystem::CreateTextureBuffer(FRDGBuilder& GraphBuilder, const void* Data, const uint32& SizeOfElement, const uint32& NumOfElements, const TCHAR* DebugName)
+FRDGTextureRef ULandmassManagerSubsystem::CreateTextureBuffer(FRDGBuilder& GraphBuilder, const FTerrainGenerationParams& Params, const void* Data, const uint32& SizeOfElement, const uint32& NumOfElements, const TCHAR* DebugName)
 {
 	FRDGTextureDesc Desc = FRDGTextureDesc::Create3D(
-		FIntVector(2, 2, 2),
+		FIntVector(Params.Width, Params.Depth, Params.Height),
 		PF_R32_FLOAT,
 		FClearValueBinding::None,
 		TexCreate_UAV | TexCreate_ShaderResource
@@ -186,4 +186,5 @@ FRDGTextureRef ULandmassManagerSubsystem::CreateTextureBuffer(FRDGBuilder& Graph
 
 void ULandmassManagerSubsystem::CancelRequest(int32 RequestId)
 {
+	PendingCallbacks.Remove(RequestId);
 }
