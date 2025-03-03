@@ -10,10 +10,34 @@ struct Triangle
 };
 
 uint3 VolumeSize;
+uint3 ChunkCoords;
+uint ChunkSize;
 
 RWStructuredBuffer<Triangle> Triangles : register(u1); 
 RWTexture3D<float> DensityMap : register(u2);
 RWStructuredBuffer<uint> Counter : register(u3);
+
+float GetDensity(int3 coord)
+{
+    // Calculate global coordinates within the volume
+    uint3 globalCoord = coord + (ChunkCoords * ChunkSize);
+    
+    // Check bounds
+    if (globalCoord.x < 0 || globalCoord.x >= VolumeSize.x ||
+        globalCoord.y < 0 || globalCoord.y >= VolumeSize.y ||
+        globalCoord.z < 0 || globalCoord.z >= VolumeSize.z)
+    {
+        return 0.0f; // Outside bounds, return default value
+    }
+    
+    return DensityMap[globalCoord];
+}
+
+float3 CoordToWorld(int3 coord)
+{
+    return coord + (ChunkCoords * ChunkSize);
+
+}
 
 float3 GetInterpolatedVertex(float3 VertA, float3 VertB, float ValueA, float ValueB)
 {
@@ -23,9 +47,9 @@ float3 GetInterpolatedVertex(float3 VertA, float3 VertB, float ValueA, float Val
     VertexPosition.z = 0.5f;
     return VertexPosition;
 }
-
+// CHANGE THIS THREAD Z VALUE WHEN YOU CHANGE THE HEIGHT OF MESH!!
 //Number of vertices
-[numthreads(8, 8, 8)]
+[numthreads(8, 8, 2)]
 void FillDensity(uint3 ThreadId: SV_DispatchThreadID, uint3 GroupId : SV_GroupID)
 {
     if (ThreadId.z == 1)
@@ -63,20 +87,21 @@ void MarchingCube(uint3 ThreadId : SV_DispatchThreadID, uint3 GroupId : SV_Group
     //corner position
      
     int3 cornerPos[8];
+    float3 WorldCoordinate = CoordToWorld(ThreadId);
     
-    cornerPos[0] = ThreadId + int3(0, 0, 0);
-    cornerPos[1] = ThreadId + int3(1, 0, 0);
-    cornerPos[2] = ThreadId + int3(1, 0, 1);
-    cornerPos[3] = ThreadId + int3(0, 0, 1);
-    cornerPos[4] = ThreadId + int3(0, 1, 0);
-    cornerPos[5] = ThreadId + int3(1, 1, 0);
-    cornerPos[6] = ThreadId + int3(1, 1, 1);
-    cornerPos[7] = ThreadId + int3(0, 1, 1);
+    cornerPos[0] = WorldCoordinate + int3(0, 0, 0);
+    cornerPos[1] = WorldCoordinate + int3(1, 0, 0);
+    cornerPos[2] = WorldCoordinate + int3(1, 0, 1);
+    cornerPos[3] = WorldCoordinate + int3(0, 0, 1);
+    cornerPos[4] = WorldCoordinate + int3(0, 1, 0);
+    cornerPos[5] = WorldCoordinate + int3(1, 1, 0);
+    cornerPos[6] = WorldCoordinate + int3(1, 1, 1);
+    cornerPos[7] = WorldCoordinate + int3(0, 1, 1);
     
     int CubeIndex = 0;
     for (int i = 0; i < 8; i++)
     {
-        if (DensityMap[cornerPos[i]] > 0)
+        if (GetDensity(cornerPos[i])  > 0)
         {
             CubeIndex |= (1U << i);
         }

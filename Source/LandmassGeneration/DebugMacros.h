@@ -15,3 +15,15 @@
 #define PRINT_VECTOR(Vector) UE_LOG(LogTemp, Warning, TEXT("%s"), *Vector.ToString());
 #define PRINT_VECTOR_NAME(Name, Vector) UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *Name,*Vector.ToString());
 #define PRINT_INT_NAME(Name, Int) UE_LOG(LogTemp, Warning, TEXT("%s: %d"), *Name, Int)
+
+#define PRINT_STRING_ASYNC(Value) \
+AsyncTask(ENamedThreads::GameThread, [Value]() \
+			{ \
+				UE_LOG(LogTemp, Warning, TEXT("Value: %s"), *Value) \
+			}); 
+
+#define PRINT_INT_ASYNC(Value) \
+AsyncTask(ENamedThreads::GameThread, [Value]() \
+			{ \
+				UE_LOG(LogTemp, Warning, TEXT("Value: %d"), Value) \
+			}); 

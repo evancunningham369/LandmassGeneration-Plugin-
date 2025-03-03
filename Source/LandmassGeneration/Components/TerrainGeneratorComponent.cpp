@@ -102,19 +102,22 @@ void UTerrainGeneratorComponent::OnComputeShaderComplete(const TArray<FTriangle>
 {
     UE_LOG(LogTemp, Warning, TEXT("Shader Completed!"));
     UE_LOG(LogTemp, Warning, TEXT("Triangle Count: %d"), TriangleCount);
-
+    for (int32 i = 0; i < 10; i++)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("After Add Data: x: %s y: %s z: %s"), *Triangles[i].Vertex1.ToString(), *Triangles[i].Vertex2.ToString(), *Triangles[i].Vertex3.ToString())
+    }
     // Start timing the distribution process
-    double StartTime = FPlatformTime::Seconds();
+    //double StartTime = FPlatformTime::Seconds();
 
-    // Distribute triangles to chunks
-    DistributeTrianglesToChunks(Triangles, TriangleCount);
+    //// Distribute triangles to chunks
+    //DistributeTrianglesToChunks(Triangles, TriangleCount);
 
-    // Measure and log performance
-    double EndTime = FPlatformTime::Seconds();
-    UE_LOG(LogTemp, Warning, TEXT("Triangle distribution took %f seconds"), EndTime - StartTime);
+    //// Measure and log performance
+    //double EndTime = FPlatformTime::Seconds();
+    //UE_LOG(LogTemp, Warning, TEXT("Triangle distribution took %f seconds"), EndTime - StartTime);
 
-    // Clear the current generation request ID
-    CurrentGenerationRequestId = INDEX_NONE;
+    //// Clear the current generation request ID
+    //CurrentGenerationRequestId = INDEX_NONE;
 }
 
 void UTerrainGeneratorComponent::DistributeTrianglesToChunks(const TArray<FTriangle>& Triangles, uint32 TriangleCount)

@@ -1,0 +1,5 @@
+Breadcrumbs 'Parallel'
+ - ClearDepthStencil (SceneDepthZ)
+ - Scene
+ - FRDGBuilder::Execute
+ - Frame 114

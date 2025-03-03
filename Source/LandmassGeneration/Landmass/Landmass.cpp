@@ -21,7 +21,7 @@ ALandmass::ALandmass()
 void ALandmass::BeginPlay()
 {
     Super::BeginPlay();
-
+    
     RegenerateTerrain();
 }
 

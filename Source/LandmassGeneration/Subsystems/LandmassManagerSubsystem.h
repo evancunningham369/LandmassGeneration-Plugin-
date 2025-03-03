@@ -25,13 +25,25 @@ public:
 
 private:
 	TArray<float> DensityData;
-	void ProcessShaderReadback(FRHIGPUBufferReadback* ReadbackBuffer, int32 RequestId, uint32 ElementSize, uint32 TotalElements);
+	void ProcessShaderReadback(
+		FRHIGPUBufferReadback* ReadbackBuffer, 
+		TArray<FTriangle> ResultTriangles,
+		int32* ProcessedChunks, 
+		const int32& TotalChunks ,
+		int32 RequestId, 
+		uint32 ElementSize,
+		uint32 NumTrianglesPerChunk);
 
 	TMap<int32, TFunction<void(const TArray<FTriangle>&, uint32)>> PendingCallbacks;
 
 	int32 NextRequestId;
 
-	void AddDensityCubesShaderPass(const FTerrainGenerationParams& Params, UWorld* World, FRDGBuilder& GraphBuilder, FRDGTextureUAVRef& DensityUAV);
+	void AddDensityCubesShaderPass(
+		const FTerrainGenerationParams& Params, 
+		const int32& TotalChunks ,
+		UWorld* World, 
+		FRDGBuilder& GraphBuilder, 
+		FRDGTextureUAVRef& DensityUAV);
 
 	FRDGBufferRef CreateEmptyBuffer(FRDGBuilder& GraphBuilder, const uint32& SizeOfElement, const uint32& NumOfElements);
 	FRDGTextureRef CreateTextureBuffer(FRDGBuilder& GraphBuilder, const FTerrainGenerationParams& Params, const void* Data, const uint32& SizeOfElement, const uint32& NumOfElements, const TCHAR* DebugName);
