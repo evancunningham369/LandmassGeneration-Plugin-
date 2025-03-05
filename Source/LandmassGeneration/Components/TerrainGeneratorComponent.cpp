@@ -36,9 +36,10 @@ void UTerrainGeneratorComponent::GenerateTerrain(const FTerrainGenerationParams&
     // Request terrain generation
     CurrentGenerationRequestId = ShaderSubsystem->RequestTerrainGeneration(
         TerrainParams,
-        [this](const TArray<FTriangle>& Triangles, uint32 TriangleCount)
+        TriangleChunks,
+        [this](uint32 TriangleCount)
         {
-            OnComputeShaderComplete(Triangles, TriangleCount);
+            OnComputeShaderComplete(TriangleCount);
         }
     );
 }
@@ -56,11 +57,11 @@ void UTerrainGeneratorComponent::CreateChunks(const FTerrainGenerationParams& Pa
     ChunkInfos.Empty();
 
     // Calculate how many chunks we need in each dimension
-    int32 ChunksX = FMath::CeilToInt((float)Params.Width / ChunkSize);
-    int32 ChunksY = FMath::CeilToInt((float)Params.Depth / ChunkSize);
-    int32 ChunksZ = FMath::CeilToInt((float)Params.Height / ChunkSize);
+    int32 ChunksX = 1;
+    int32 ChunksY = 1;
+    int32 ChunksZ = 1;
 
-    UE_LOG(LogTemp, Warning, TEXT("Creating %d x %d x %d chunks"), ChunksX, ChunksY, ChunksZ);
+    UE_LOG(LogTemp, Warning, TEXT("HARCODED!!!: Creating %d x %d x %d chunks"), ChunksX, ChunksY, ChunksZ);
 
     // Create chunks
     for (int32 X = 0; X < ChunksX; X++)
@@ -69,8 +70,8 @@ void UTerrainGeneratorComponent::CreateChunks(const FTerrainGenerationParams& Pa
         {
             for (int32 Z = 0; Z < ChunksZ; Z++)
             {
-                FIntVector ChunkCoords(X, Y, Z);
-
+                FUintVector ChunkCoords(X, Y, Z);
+                TriangleChunks.Add(ChunkCoords, TArray<FTriangle>());
                 // Create a component for this chunk
                 FString ChunkName = FString::Printf(TEXT("Chunk_%d_%d_%d"), X, Y, Z);
                 UTerrainChunkComponent* ChunkComponent = NewObject<UTerrainChunkComponent>(GetOwner(), *ChunkName);
@@ -98,72 +99,18 @@ void UTerrainGeneratorComponent::CreateChunks(const FTerrainGenerationParams& Pa
     }
 }
 
-void UTerrainGeneratorComponent::OnComputeShaderComplete(const TArray<FTriangle>& Triangles, uint32 TriangleCount)
+void UTerrainGeneratorComponent::OnComputeShaderComplete(uint32 TriangleCount)
 {
     UE_LOG(LogTemp, Warning, TEXT("Shader Completed!"));
     UE_LOG(LogTemp, Warning, TEXT("Triangle Count: %d"), TriangleCount);
-    for (int32 i = 0; i < 10; i++)
+
+    /*for (uint32 i = 0; i < 5; i++)
     {
-        UE_LOG(LogTemp, Warning, TEXT("After Add Data: x: %s y: %s z: %s"), *Triangles[i].Vertex1.ToString(), *Triangles[i].Vertex2.ToString(), *Triangles[i].Vertex3.ToString())
-    }
-    // Start timing the distribution process
-    //double StartTime = FPlatformTime::Seconds();
-
-    //// Distribute triangles to chunks
-    //DistributeTrianglesToChunks(Triangles, TriangleCount);
-
-    //// Measure and log performance
-    //double EndTime = FPlatformTime::Seconds();
-    //UE_LOG(LogTemp, Warning, TEXT("Triangle distribution took %f seconds"), EndTime - StartTime);
+        UE_LOG(LogTemp, Warning, TEXT("Data: x: %s y: %s z: %s"), *Triangles[i].Vertex1.ToString(), *Triangles[i].Vertex2.ToString(), *Triangles[i].Vertex3.ToString())
+    }*/
 
     //// Clear the current generation request ID
-    //CurrentGenerationRequestId = INDEX_NONE;
-}
-
-void UTerrainGeneratorComponent::DistributeTrianglesToChunks(const TArray<FTriangle>& Triangles, uint32 TriangleCount)
-{
-    // Create a map to hold triangles for each chunk
-    TMap<FIntVector, TArray<FTriangle>> ChunkTriangles;
-
-    // Track how many triangles we process to respect the maximum
-    int32 ProcessedTriangles = 0;
-
-    // Process each triangle
-    for (int32 i = 0; i < Triangles.Num() && ProcessedTriangles < MaxTriangleCount; i++)
-    {
-        const FTriangle& Triangle = Triangles[i];
-
-        // Convert to FVector to determine chunk
-        FVector Vertex1(Triangle.Vertex1);
-        FVector Vertex2(Triangle.Vertex2);
-        FVector Vertex3(Triangle.Vertex3);
-
-        // Find the average position to determine which chunk this triangle belongs to
-        FVector TriangleCenter = (Vertex1 + Vertex2 + Vertex3) / 3.0f;
-
-        // Get the chunk coordinates for this position
-        FIntVector ChunkCoords = GetChunkCoordsForPoint(TriangleCenter);
-
-        // Add the triangle to the appropriate chunk
-        if (!ChunkTriangles.Contains(ChunkCoords))
-        {
-            ChunkTriangles.Add(ChunkCoords, TArray<FTriangle>());
-        }
-        ChunkTriangles[ChunkCoords].Add(Triangle);
-
-        ProcessedTriangles++;
-    }
-
-    // Update each chunk with its triangles
-    for (auto& ChunkInfo : ChunkInfos)
-    {
-        TArray<FTriangle>* ChunkTriangleArray = ChunkTriangles.Find(ChunkInfo.ChunkCoords);
-
-        if (ChunkTriangleArray && ChunkTriangleArray->Num() > 0)
-        {
-            ChunkInfo.ChunkComponent->UpdateMesh(*ChunkTriangleArray, ChunkTriangleArray->Num());
-        }
-    }
+    CurrentGenerationRequestId = INDEX_NONE;
 }
 
 FIntVector UTerrainGeneratorComponent::GetChunkCoordsForPoint(const FVector& Point) const

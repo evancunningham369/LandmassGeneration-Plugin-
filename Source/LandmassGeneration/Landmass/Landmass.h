@@ -30,17 +30,17 @@ public:
 
     // Quality presets
     UPROPERTY(EditAnywhere, Category = "Terrain Generation")
-    ETerrainQuality TerrainQuality = ETerrainQuality::Low;
+    ETerrainQuality TerrainQuality = ETerrainQuality::Custom;
 
     // Custom terrain settings (only used when TerrainQuality = Custom)
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain Generation", meta = (EditCondition = "TerrainQuality == ETerrainQuality::Custom", ClampMin = "8", ClampMax = "512"))
-    int32 CustomTerrainWidth = 64;
+    int32 CustomTerrainWidth = 16;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain Generation", meta = (EditCondition = "TerrainQuality == ETerrainQuality::Custom", ClampMin = "8", ClampMax = "512"))
-    int32 CustomTerrainHeight = 64;
+    int32 CustomTerrainHeight = 2;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain Generation", meta = (EditCondition = "TerrainQuality == ETerrainQuality::Custom", ClampMin = "8", ClampMax = "512"))
-    int32 CustomTerrainDepth = 64;
+    int32 CustomTerrainDepth = 16;
 
     // Chunk size
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain Generation", meta = (ClampMin = "8", ClampMax = "64"))

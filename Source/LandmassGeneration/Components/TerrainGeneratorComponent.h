@@ -17,7 +17,7 @@ struct FTerrainChunkInfo
     GENERATED_BODY()
 
     UPROPERTY()
-    FIntVector ChunkCoords;
+    FUintVector ChunkCoords;
 
     UPROPERTY()
     class UTerrainChunkComponent* ChunkComponent;
@@ -38,7 +38,7 @@ public:
     void GenerateTerrain(const FTerrainGenerationParams& Params);
 
     /** Called when compute shader completes */
-    void OnComputeShaderComplete(const TArray<FTriangle>& Triangles, uint32 TriangleCount);
+    void OnComputeShaderComplete(uint32 TriangleCount);
 
     /** The maximum number of triangles to generate */
     UPROPERTY(EditAnywhere, Category = "Terrain Generation")
@@ -46,7 +46,7 @@ public:
 
     /** The size of each chunk in voxels */
     UPROPERTY(EditAnywhere, Category = "Terrain Generation", meta = (ClampMin = "8", ClampMax = "64"))
-    int32 ChunkSize = 32;
+    int32 ChunkSize = 16;
 
     bool bEnableDebugVisualization = false;
 
@@ -54,13 +54,13 @@ private:
     /** Create chunks based on terrain parameters */
     void CreateChunks(const FTerrainGenerationParams& Params);
 
-    /** Distribute triangles to appropriate chunks */
-    void DistributeTrianglesToChunks(const TArray<FTriangle>& Triangles, uint32 TriangleCount);
-
     /** Calculate which chunk a point belongs to */
     FIntVector GetChunkCoordsForPoint(const FVector& Point) const;
 
     FTerrainGenerationParams TerrainParams;
+
+    TMap<FUintVector, TArray<FTriangle>> TriangleChunks;
+
 
     UPROPERTY()
     TArray<FTerrainChunkInfo> ChunkInfos;
