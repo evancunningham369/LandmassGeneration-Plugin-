@@ -97,8 +97,11 @@ int32 ULandmassManagerSubsystem::RequestTerrainGeneration(
 			// Execute graph for each chunk
 			
 			GraphBuilder.Execute();
-			UE_LOG(LogTemp, Warning, TEXT("Executing Graph..."));
-			UE_LOG(LogTemp, Warning, TEXT("\nTotal Chunks : %d \n Triangles Per Chunk: %d"), TotalChunks, NumTrianglesPerChunk);
+			AsyncTask(ENamedThreads::GameThread, [TotalChunks, NumTrianglesPerChunk]()
+				{
+					UE_LOG(LogTemp, Warning, TEXT("Executing Graph..."));
+					UE_LOG(LogTemp, Warning, TEXT("\nTotal Chunks : %d \n Triangles Per Chunk: %d"), TotalChunks, NumTrianglesPerChunk);
+				});
 			
 			for (const TPair<FIntVector, FRHIGPUBufferReadback*>& Pair : TriangleReadbackBuffers)
 			{
@@ -175,8 +178,10 @@ void ULandmassManagerSubsystem::ProcessShaderReadback(
 		PRINT_STRING_ASYNC(Value);
 	}
 	int32 CurrentProcessed = FPlatformAtomics::InterlockedIncrement(ProcessedChunks.Get());
-	UE_LOG(LogTemp, Warning, TEXT("Processed Chunks: %d of %d"), CurrentProcessed, TotalChunks);
-
+	AsyncTask(ENamedThreads::GameThread, [CurrentProcessed, TotalChunks]()
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Processed Chunks: %d of %d"), CurrentProcessed, TotalChunks);
+		});
 	if (CurrentProcessed == TotalChunks)
 	{
 		AsyncTask(ENamedThreads::GameThread, [this, TotalChunks ,RequestId]()

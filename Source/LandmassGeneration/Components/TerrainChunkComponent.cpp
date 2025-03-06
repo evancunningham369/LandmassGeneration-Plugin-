@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #include "TerrainChunkComponent.h"
 #include "DynamicMesh/MeshNormals.h"
+#include <LandmassGeneration/DebugMacros.h>
 
 using namespace UE::Geometry;
 
@@ -68,11 +69,19 @@ void UTerrainChunkComponent::UpdateMesh(const TArray<FTriangle>& Triangles, uint
         );
     }
 
-    // Calculate normals for proper lighting/shading
-    FMeshNormals::QuickComputeVertexNormals(Mesh);
+	//Iterate over Mesh vertices
+    for (int32 VertexIndex = 0; VertexIndex < Mesh.MaxVertexID(); VertexIndex++)
+    {
+		// Get the vertex position
+		FVector3d VertexPosition = Mesh.GetVertex(VertexIndex);
+        DRAW_POINT_PERM(VertexPosition, FColor::Red);
+    }
 
+    // Calculate normals for proper lighting/shading
+    //FMeshNormals::QuickComputeVertexNormals(Mesh);
+    
     // Set the mesh to the component
-    SetMesh(MoveTemp(Mesh));
+    //SetMesh(MoveTemp(Mesh));
 
     // Measure and log performance
     double EndTime = FPlatformTime::Seconds();

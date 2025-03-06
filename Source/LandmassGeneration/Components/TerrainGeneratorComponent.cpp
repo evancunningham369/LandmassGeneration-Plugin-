@@ -128,15 +128,12 @@ void UTerrainGeneratorComponent::OnComputeShaderComplete()
         if (ChunkData->bIsProcessed)
         {
             // Update the mesh with triangles from shared data
-            ChunkInfo.ChunkComponent->UpdateMesh(ChunkData->Triangles, ChunkData->TriangleCount);
+            ChunkInfo.ChunkComponent->UpdateMeshFromSharedData();
 
             // Debug visualization if enabled
             if (bEnableDebugVisualization)
             {
-                for (const FTriangle& Triangle : ChunkData->Triangles)
-                {
-                    // Visualization code...
-                }
+                // Debug Log the Triangles
             }
         }
     }
