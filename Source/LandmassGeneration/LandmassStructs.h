@@ -3,6 +3,20 @@
 #include "LandmassStructs.generated.h"
 
 USTRUCT()
+
+struct FTerrainChunkData
+{
+    GENERATED_BODY()
+
+    TArray<FTriangle> Triangles;
+    int32 TriangleCount = 0;
+    bool bIsProcessed = false;
+};
+
+typedef TSharedPtr<FTerrainChunkData> FTerrainChunkDataPtr;
+typedef TSharedRef<FTerrainChunkData> FTerrainChunkDataRef;
+
+USTRUCT()
 struct FTriangle
 {
     GENERATED_BODY()

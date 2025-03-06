@@ -9,32 +9,31 @@
 
 int32 ULandmassManagerSubsystem::RequestTerrainGeneration(
 	const FTerrainGenerationParams& Params, 
-	TMap<FIntVector, TArray<FTriangle>>& TriangleChunks,
-	TFunction<void(uint32)> Callback)
+	const FIntVector& ChunkCount,
+	const uint32& ChunkSize,
+	TMap<FIntVector, TSharedPtr<FTerrainChunkData>>& ChunkDataMap,
+	TFunction<void()> Callback)
 {
+	
 	UE_LOG(LogTemp, Warning, TEXT("Requesting Terrain Generation..."));
 
 	int32 RequestId = NextRequestId++;
 	PendingCallbacks.Add(RequestId, Callback);
-
-	// Calculate how many chunks we need in each dimension
-	int32 ChunkSize = 16; // Make sure this matches your component's chunk size
-	/*int32 ChunksX = FMath::CeilToInt((float)Params.Width / ChunkSize);
-	int32 ChunksY = FMath::CeilToInt((float)Params.Depth / ChunkSize);
-	int32 ChunksZ = FMath::CeilToInt((float)Params.Height / ChunkSize);*/
 	
-	int32 ChunksX = 1;
-	int32 ChunksY = 1;
-	int32 ChunksZ = 1;
+	int32 ChunksX = ChunkCount.X;
+	int32 ChunksY = ChunkCount.Y;
+	int32 ChunksZ = ChunkCount.Z;
 
 
-	int32 ProcessedChunks = 0;
+	TSharedPtr<int32> ProcessedChunks = MakeShared<int32>(0);
+
 	const int32 TotalChunks = ChunksX * ChunksY * ChunksZ;
-	UE_LOG(LogTemp, Warning, TEXT("THIS VALUE IS HARDCODED \nTotal Chunks: %d"), TotalChunks);
+
+	UE_LOG(LogTemp, Warning, TEXT("Total Chunks: %d"), TotalChunks);
 	
 	UE_LOG(LogTemp, Warning, TEXT("Chunk Size: %d\n ChunksX: %d\n ChunksY: %d\n ChunksZ: %d"), ChunkSize, ChunksX, ChunksY, ChunksZ);
 	ENQUEUE_RENDER_COMMAND(TerrainGenerationCommand)(
-		[this, Params, RequestId, TriangleChunks ,ChunkSize, ChunksX, ChunksY, ChunksZ, ProcessedChunks, TotalChunks](FRHICommandListImmediate& RHICmdList)
+		[this, Params, RequestId, &ChunkDataMap ,&ChunkSize, ChunksX, ChunksY, ChunksZ, ProcessedChunks, TotalChunks](FRHICommandListImmediate& RHICmdList)
 		{
 			FRDGBuilder GraphBuilder(RHICmdList);
 
@@ -71,7 +70,7 @@ int32 ULandmassManagerSubsystem::RequestTerrainGeneration(
 						MarchingCubesParams->ChunkSize = ChunkSize; // Pass chunk size
 
 
-						const int32 ThreadGroupSize = 8;
+						const uint32 ThreadGroupSize = 8;
 
 						FIntVector MarchingCubesThreadGroups(
 							FMath::DivideAndRoundUp(ChunkSize, ThreadGroupSize),
@@ -108,7 +107,7 @@ int32 ULandmassManagerSubsystem::RequestTerrainGeneration(
 
 				ProcessShaderReadback(
 					ReadbackBuffer,
-					TriangleChunks,
+					ChunkDataMap,
 					ChunkCoords,
 					ProcessedChunks, 
 					TotalChunks, 
@@ -124,9 +123,9 @@ int32 ULandmassManagerSubsystem::RequestTerrainGeneration(
 
 void ULandmassManagerSubsystem::ProcessShaderReadback(
 	FRHIGPUBufferReadback* ReadbackBuffer, 
-	TMap<FIntVector, TArray<FTriangle>> TriangleChunks,
+	TMap<FIntVector, TSharedPtr<FTerrainChunkData>>& ChunkDataMap,
 	FIntVector& ChunkCoords,
-	int32 ProcessedChunks, 
+	TSharedPtr<int32> ProcessedChunks, 
 	const int32& TotalChunks, 
 	int32 RequestId, 
 	uint32 ElementSize, 
@@ -134,28 +133,34 @@ void ULandmassManagerSubsystem::ProcessShaderReadback(
 {
 	FString Value = "ProcessingShaderReadback...";
 	PRINT_STRING_ASYNC(Value);
-	TFunction<void(uint32)>* Callback = PendingCallbacks.Find(RequestId);
-	if (!Callback)
+
+	TSharedPtr<FTerrainChunkData>* ChunkDataPtr = ChunkDataMap.Find(ChunkCoords);
+	if (!ChunkDataPtr || !(*ChunkDataPtr).IsValid())
 	{
+		UE_LOG(LogTemp, Warning, TEXT("No chunk data found for %s"), *ChunkCoords.ToString());
 		return;
 	}
 
+	TSharedPtr<FTerrainChunkData> ChunkData = *ChunkDataPtr;
+
 	if (ReadbackBuffer)
 	{
-		Value = "Readback buffer valid...";
-		PRINT_STRING_ASYNC(Value);
 		void* Data = ReadbackBuffer->Lock(NumTrianglesPerChunk * ElementSize);
 		if (Data)
 		{
 			FTriangle* TriangleData = static_cast<FTriangle*>(Data);
 
+			ChunkData->Triangles.Reserve(NumTrianglesPerChunk);
+
 			for (uint32 i = 0; i < NumTrianglesPerChunk; i++)
 			{
-				TriangleChunks.FindOrAdd(ChunkCoords).Add(TriangleData[i]);
+				ChunkData->Triangles.Add(TriangleData[i]);
 			}
 
-			Value = "Data copied...";
-			PRINT_STRING_ASYNC(Value);
+			ChunkData->TriangleCount = NumTrianglesPerChunk;
+			ChunkData->bIsProcessed = true;
+
+
 			ReadbackBuffer->Unlock();
 		}
 		else
@@ -169,16 +174,20 @@ void ULandmassManagerSubsystem::ProcessShaderReadback(
 		Value = "Readback buffer invalid";
 		PRINT_STRING_ASYNC(Value);
 	}
-	ProcessedChunks++;
+	int32 CurrentProcessed = FPlatformAtomics::InterlockedIncrement(ProcessedChunks.Get());
+	UE_LOG(LogTemp, Warning, TEXT("Processed Chunks: %d of %d"), CurrentProcessed, TotalChunks);
 
-	if (ProcessedChunks == TotalChunks)
+	if (CurrentProcessed == TotalChunks)
 	{
-		
-		AsyncTask(ENamedThreads::GameThread, [&TriangleChunks, TotalChunks ,NumTrianglesPerChunk, Callback, this, RequestId]()
+		AsyncTask(ENamedThreads::GameThread, [this, TotalChunks ,RequestId]()
 			{
-				UE_LOG(LogTemp, Warning, TEXT("HARDCODED!!! Processed all Chunks"))
-				(*Callback)(NumTrianglesPerChunk * TotalChunks);
-
+				UE_LOG(LogTemp, Warning, TEXT("Processed all %d Chunks"), TotalChunks)
+				TFunction<void()>* Callback = PendingCallbacks.Find(RequestId);
+				if (Callback)
+				{
+					(*Callback)();
+					PendingCallbacks.Remove(RequestId);
+				}
 				PendingCallbacks.Remove(RequestId);
 			});
 	}

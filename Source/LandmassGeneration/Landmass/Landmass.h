@@ -30,7 +30,7 @@ public:
 
     // Quality presets
     UPROPERTY(EditAnywhere, Category = "Terrain Generation")
-    ETerrainQuality TerrainQuality = ETerrainQuality::Custom;
+    ETerrainQuality TerrainQuality = ETerrainQuality::Low;
 
     // Custom terrain settings (only used when TerrainQuality = Custom)
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain Generation", meta = (EditCondition = "TerrainQuality == ETerrainQuality::Custom", ClampMin = "8", ClampMax = "512"))

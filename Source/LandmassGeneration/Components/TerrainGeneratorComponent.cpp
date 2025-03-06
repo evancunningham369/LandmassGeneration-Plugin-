@@ -18,7 +18,7 @@ void UTerrainGeneratorComponent::GenerateTerrain(const FTerrainGenerationParams&
     TerrainParams = Params;
 
     // Create the chunks
-    CreateChunks(TerrainParams);
+    FIntVector ChunkCount = CreateChunks(TerrainParams);
 
     // Get the subsystem
     if (!ShaderSubsystem)
@@ -36,15 +36,17 @@ void UTerrainGeneratorComponent::GenerateTerrain(const FTerrainGenerationParams&
     // Request terrain generation
     CurrentGenerationRequestId = ShaderSubsystem->RequestTerrainGeneration(
         TerrainParams,
-        TriangleChunks,
-        [this](uint32 TriangleCount)
+        ChunkCount,
+		ChunkSize,
+        ChunkDataMap,
+        [this]()
         {
-            OnComputeShaderComplete(TriangleCount);
+            OnComputeShaderComplete();
         }
     );
 }
 
-void UTerrainGeneratorComponent::CreateChunks(const FTerrainGenerationParams& Params)
+FIntVector UTerrainGeneratorComponent::CreateChunks(const FTerrainGenerationParams& Params)
 {
     // Clear existing chunks
     for (FTerrainChunkInfo& ChunkInfo : ChunkInfos)
@@ -55,13 +57,16 @@ void UTerrainGeneratorComponent::CreateChunks(const FTerrainGenerationParams& Pa
         }
     }
     ChunkInfos.Empty();
-
+    ChunkDataMap.Empty();
+    
     // Calculate how many chunks we need in each dimension
-    int32 ChunksX = 1;
-    int32 ChunksY = 1;
-    int32 ChunksZ = 1;
+	int32 ChunksX = FMath::CeilToInt((float)Params.Width / ChunkSize);
+	int32 ChunksY = FMath::CeilToInt((float)Params.Depth / ChunkSize);
+	int32 ChunksZ = FMath::CeilToInt((float)Params.Height / ChunkSize);
 
-    UE_LOG(LogTemp, Warning, TEXT("HARCODED!!!: Creating %d x %d x %d chunks"), ChunksX, ChunksY, ChunksZ);
+	FIntVector ChunkCount(ChunksX, ChunksY, ChunksZ);
+
+    UE_LOG(LogTemp, Warning, TEXT("Creating %d x %d x %d chunks"), ChunksX, ChunksY, ChunksZ);
 
     // Create chunks
     for (int32 X = 0; X < ChunksX; X++)
@@ -71,13 +76,17 @@ void UTerrainGeneratorComponent::CreateChunks(const FTerrainGenerationParams& Pa
             for (int32 Z = 0; Z < ChunksZ; Z++)
             {
                 FIntVector ChunkCoords(X, Y, Z);
-                TriangleChunks.Add(ChunkCoords, TArray<FTriangle>());
+                
+				TSharedPtr<FTerrainChunkData> ChunkData = MakeShared<FTerrainChunkData>();
+				ChunkDataMap.Add(ChunkCoords, ChunkData);
+
                 // Create a component for this chunk
                 FString ChunkName = FString::Printf(TEXT("Chunk_%d_%d_%d"), X, Y, Z);
                 UTerrainChunkComponent* ChunkComponent = NewObject<UTerrainChunkComponent>(GetOwner(), *ChunkName);
 
                 // Set up the component
                 ChunkComponent->SetChunkCoords(ChunkCoords);
+				ChunkComponent->SetChunkData(ChunkData);
                 ChunkComponent->SetupAttachment(this);
                 ChunkComponent->RegisterComponent();
 
@@ -93,34 +102,45 @@ void UTerrainGeneratorComponent::CreateChunks(const FTerrainGenerationParams& Pa
                 FTerrainChunkInfo ChunkInfo;
                 ChunkInfo.ChunkCoords = ChunkCoords;
                 ChunkInfo.ChunkComponent = ChunkComponent;
+				ChunkInfo.ChunkData = ChunkData;
                 ChunkInfos.Add(ChunkInfo);
             }
         }
     }
+    return ChunkCount;
 }
 
-void UTerrainGeneratorComponent::OnComputeShaderComplete(uint32 TriangleCount)
+void UTerrainGeneratorComponent::OnComputeShaderComplete()
 {
     UE_LOG(LogTemp, Warning, TEXT("Shader Completed!"));
-    UE_LOG(LogTemp, Warning, TEXT("Triangle Count: %d"), TriangleCount);
 
-    for (const TPair<FIntVector, TArray<FTriangle>>& Pair : TriangleChunks)
+    // Update all chunks with their respective triangles
+    for (FTerrainChunkInfo& ChunkInfo : ChunkInfos)
     {
-		FIntVector ChunkCoords = Pair.Key;
-		const TArray<FTriangle>& Triangles = Pair.Value;
-		
-		UE_LOG(LogTemp, Warning, TEXT("Chunk: %s"), *ChunkCoords.ToString());
+        if (!ChunkInfo.ChunkData.IsValid() || !ChunkInfo.ChunkComponent)
+        {
+            continue;
+        }
 
-		for (const FTriangle& Triangle : Triangles)
-		{
-			FVector3f V0 = Triangle.Vertex1;
-			FVector3f V1 = Triangle.Vertex2;
-			FVector3f V2 = Triangle.Vertex3;
-			UE_LOG(LogTemp, Warning, TEXT("Triangle: %s, %s, %s"), *V0.ToString(), *V1.ToString(), *V2.ToString());
-		}
+        // Access the shared data
+        const TSharedPtr<FTerrainChunkData>& ChunkData = ChunkInfo.ChunkData;
+
+        if (ChunkData->bIsProcessed)
+        {
+            // Update the mesh with triangles from shared data
+            ChunkInfo.ChunkComponent->UpdateMesh(ChunkData->Triangles, ChunkData->TriangleCount);
+
+            // Debug visualization if enabled
+            if (bEnableDebugVisualization)
+            {
+                for (const FTriangle& Triangle : ChunkData->Triangles)
+                {
+                    // Visualization code...
+                }
+            }
+        }
     }
-
-    //// Clear the current generation request ID
+    // Clear the current generation request ID
     CurrentGenerationRequestId = INDEX_NONE;
 }
 

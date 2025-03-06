@@ -27,7 +27,15 @@ public:
     /** Set chunk coordinates */
     void SetChunkCoords(const FIntVector& InCoords) { ChunkCoords = InCoords; }
 
+	TSharedPtr<FTerrainChunkData> GetChunkData() const { return ChunkData; }
+
+	void SetChunkData(TSharedPtr<FTerrainChunkData> InChunkData) { ChunkData = InChunkData; }
+
+    void UpdateMeshFromSharedData();
+
 private:
+	TSharedPtr<FTerrainChunkData> ChunkData;
+
     FDynamicMesh3 Mesh;
     FIntVector ChunkCoords;
 };

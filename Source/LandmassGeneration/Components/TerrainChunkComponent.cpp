@@ -11,6 +11,15 @@ UTerrainChunkComponent::UTerrainChunkComponent()
     SetCollisionObjectType(ECC_GameTraceChannel1);
 }
 
+void UTerrainChunkComponent::UpdateMeshFromSharedData()
+{
+    if (!ChunkData.IsValid())
+    {
+        return;
+    }
+    UpdateMesh(ChunkData->Triangles, ChunkData->TriangleCount);
+}
+
 void UTerrainChunkComponent::UpdateMesh(const TArray<FTriangle>& Triangles, uint32 TriangleCount)
 {
     // Start timing the mesh generation
