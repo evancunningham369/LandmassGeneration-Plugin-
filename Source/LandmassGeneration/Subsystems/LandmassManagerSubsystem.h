@@ -19,7 +19,7 @@ public:
 
 	int32 RequestTerrainGeneration(
 		const FTerrainGenerationParams& Params,
-		TMap<FUintVector, TArray<FTriangle>>& TriangleChunks,
+		TMap<FIntVector, TArray<FTriangle>>& TriangleChunks,
 		TFunction<void(uint32)> Callback);
 
 	void CancelRequest(int32 RequestId);
@@ -28,8 +28,8 @@ private:
 	TArray<float> DensityData;
 	void ProcessShaderReadback(
 		FRHIGPUBufferReadback* ReadbackBuffer, 
-		TMap<FUintVector, TArray<FTriangle>>& TriangleChunks,
-		FUintVector& ChunkCoords,
+		TMap<FIntVector, TArray<FTriangle>> TriangleChunks,
+		FIntVector& ChunkCoords,
 		int32 ProcessedChunks, 
 		const int32& TotalChunks ,
 		int32 RequestId, 

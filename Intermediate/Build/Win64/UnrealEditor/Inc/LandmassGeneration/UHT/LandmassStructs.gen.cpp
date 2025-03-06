@@ -1,0 +1,154 @@
+// Copyright Epic Games, Inc. All Rights Reserved.
+/*===========================================================================
+	Generated code exported from UnrealHeaderTool.
+	DO NOT modify this manually! Edit the corresponding .h files instead!
+===========================================================================*/
+
+#include "UObject/GeneratedCppIncludes.h"
+#include "LandmassGeneration/LandmassStructs.h"
+PRAGMA_DISABLE_DEPRECATION_WARNINGS
+void EmptyLinkFunctionForGeneratedCodeLandmassStructs() {}
+
+// Begin Cross Module References
+COREUOBJECT_API UScriptStruct* Z_Construct_UScriptStruct_FVector3f();
+LANDMASSGENERATION_API UScriptStruct* Z_Construct_UScriptStruct_FTerrainGenerationParams();
+LANDMASSGENERATION_API UScriptStruct* Z_Construct_UScriptStruct_FTriangle();
+UPackage* Z_Construct_UPackage__Script_LandmassGeneration();
+// End Cross Module References
+
+// Begin ScriptStruct FTriangle
+static FStructRegistrationInfo Z_Registration_Info_UScriptStruct_Triangle;
+class UScriptStruct* FTriangle::StaticStruct()
+{
+	if (!Z_Registration_Info_UScriptStruct_Triangle.OuterSingleton)
+	{
+		Z_Registration_Info_UScriptStruct_Triangle.OuterSingleton = GetStaticStruct(Z_Construct_UScriptStruct_FTriangle, (UObject*)Z_Construct_UPackage__Script_LandmassGeneration(), TEXT("Triangle"));
+	}
+	return Z_Registration_Info_UScriptStruct_Triangle.OuterSingleton;
+}
+template<> LANDMASSGENERATION_API UScriptStruct* StaticStruct<FTriangle>()
+{
+	return FTriangle::StaticStruct();
+}
+struct Z_Construct_UScriptStruct_FTriangle_Statics
+{
+#if WITH_METADATA
+	static constexpr UECodeGen_Private::FMetaDataPairParam Struct_MetaDataParams[] = {
+		{ "ModuleRelativePath", "LandmassStructs.h" },
+	};
+	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_Vertex1_MetaData[] = {
+		{ "ModuleRelativePath", "LandmassStructs.h" },
+	};
+	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_Vertex2_MetaData[] = {
+		{ "ModuleRelativePath", "LandmassStructs.h" },
+	};
+	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_Vertex3_MetaData[] = {
+		{ "ModuleRelativePath", "LandmassStructs.h" },
+	};
+#endif // WITH_METADATA
+	static const UECodeGen_Private::FStructPropertyParams NewProp_Vertex1;
+	static const UECodeGen_Private::FStructPropertyParams NewProp_Vertex2;
+	static const UECodeGen_Private::FStructPropertyParams NewProp_Vertex3;
+	static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
+	static void* NewStructOps()
+	{
+		return (UScriptStruct::ICppStructOps*)new UScriptStruct::TCppStructOps<FTriangle>();
+	}
+	static const UECodeGen_Private::FStructParams StructParams;
+};
+const UECodeGen_Private::FStructPropertyParams Z_Construct_UScriptStruct_FTriangle_Statics::NewProp_Vertex1 = { "Vertex1", nullptr, (EPropertyFlags)0x0010000000000000, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(FTriangle, Vertex1), Z_Construct_UScriptStruct_FVector3f, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_Vertex1_MetaData), NewProp_Vertex1_MetaData) };
+const UECodeGen_Private::FStructPropertyParams Z_Construct_UScriptStruct_FTriangle_Statics::NewProp_Vertex2 = { "Vertex2", nullptr, (EPropertyFlags)0x0010000000000000, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(FTriangle, Vertex2), Z_Construct_UScriptStruct_FVector3f, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_Vertex2_MetaData), NewProp_Vertex2_MetaData) };
+const UECodeGen_Private::FStructPropertyParams Z_Construct_UScriptStruct_FTriangle_Statics::NewProp_Vertex3 = { "Vertex3", nullptr, (EPropertyFlags)0x0010000000000000, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(FTriangle, Vertex3), Z_Construct_UScriptStruct_FVector3f, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_Vertex3_MetaData), NewProp_Vertex3_MetaData) };
+const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UScriptStruct_FTriangle_Statics::PropPointers[] = {
+	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FTriangle_Statics::NewProp_Vertex1,
+	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FTriangle_Statics::NewProp_Vertex2,
+	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FTriangle_Statics::NewProp_Vertex3,
+};
+static_assert(UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FTriangle_Statics::PropPointers) < 2048);
+const UECodeGen_Private::FStructParams Z_Construct_UScriptStruct_FTriangle_Statics::StructParams = {
+	(UObject* (*)())Z_Construct_UPackage__Script_LandmassGeneration,
+	nullptr,
+	&NewStructOps,
+	"Triangle",
+	Z_Construct_UScriptStruct_FTriangle_Statics::PropPointers,
+	UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FTriangle_Statics::PropPointers),
+	sizeof(FTriangle),
+	alignof(FTriangle),
+	RF_Public|RF_Transient|RF_MarkAsNative,
+	EStructFlags(0x00000001),
+	METADATA_PARAMS(UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FTriangle_Statics::Struct_MetaDataParams), Z_Construct_UScriptStruct_FTriangle_Statics::Struct_MetaDataParams)
+};
+UScriptStruct* Z_Construct_UScriptStruct_FTriangle()
+{
+	if (!Z_Registration_Info_UScriptStruct_Triangle.InnerSingleton)
+	{
+		UECodeGen_Private::ConstructUScriptStruct(Z_Registration_Info_UScriptStruct_Triangle.InnerSingleton, Z_Construct_UScriptStruct_FTriangle_Statics::StructParams);
+	}
+	return Z_Registration_Info_UScriptStruct_Triangle.InnerSingleton;
+}
+// End ScriptStruct FTriangle
+
+// Begin ScriptStruct FTerrainGenerationParams
+static FStructRegistrationInfo Z_Registration_Info_UScriptStruct_TerrainGenerationParams;
+class UScriptStruct* FTerrainGenerationParams::StaticStruct()
+{
+	if (!Z_Registration_Info_UScriptStruct_TerrainGenerationParams.OuterSingleton)
+	{
+		Z_Registration_Info_UScriptStruct_TerrainGenerationParams.OuterSingleton = GetStaticStruct(Z_Construct_UScriptStruct_FTerrainGenerationParams, (UObject*)Z_Construct_UPackage__Script_LandmassGeneration(), TEXT("TerrainGenerationParams"));
+	}
+	return Z_Registration_Info_UScriptStruct_TerrainGenerationParams.OuterSingleton;
+}
+template<> LANDMASSGENERATION_API UScriptStruct* StaticStruct<FTerrainGenerationParams>()
+{
+	return FTerrainGenerationParams::StaticStruct();
+}
+struct Z_Construct_UScriptStruct_FTerrainGenerationParams_Statics
+{
+#if WITH_METADATA
+	static constexpr UECodeGen_Private::FMetaDataPairParam Struct_MetaDataParams[] = {
+		{ "ModuleRelativePath", "LandmassStructs.h" },
+	};
+#endif // WITH_METADATA
+	static void* NewStructOps()
+	{
+		return (UScriptStruct::ICppStructOps*)new UScriptStruct::TCppStructOps<FTerrainGenerationParams>();
+	}
+	static const UECodeGen_Private::FStructParams StructParams;
+};
+const UECodeGen_Private::FStructParams Z_Construct_UScriptStruct_FTerrainGenerationParams_Statics::StructParams = {
+	(UObject* (*)())Z_Construct_UPackage__Script_LandmassGeneration,
+	nullptr,
+	&NewStructOps,
+	"TerrainGenerationParams",
+	nullptr,
+	0,
+	sizeof(FTerrainGenerationParams),
+	alignof(FTerrainGenerationParams),
+	RF_Public|RF_Transient|RF_MarkAsNative,
+	EStructFlags(0x00000001),
+	METADATA_PARAMS(UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FTerrainGenerationParams_Statics::Struct_MetaDataParams), Z_Construct_UScriptStruct_FTerrainGenerationParams_Statics::Struct_MetaDataParams)
+};
+UScriptStruct* Z_Construct_UScriptStruct_FTerrainGenerationParams()
+{
+	if (!Z_Registration_Info_UScriptStruct_TerrainGenerationParams.InnerSingleton)
+	{
+		UECodeGen_Private::ConstructUScriptStruct(Z_Registration_Info_UScriptStruct_TerrainGenerationParams.InnerSingleton, Z_Construct_UScriptStruct_FTerrainGenerationParams_Statics::StructParams);
+	}
+	return Z_Registration_Info_UScriptStruct_TerrainGenerationParams.InnerSingleton;
+}
+// End ScriptStruct FTerrainGenerationParams
+
+// Begin Registration
+struct Z_CompiledInDeferFile_FID_Users_donut_Documents_LandmassGenerationUnreal_LandmassGeneration_Source_LandmassGeneration_LandmassStructs_h_Statics
+{
+	static constexpr FStructRegisterCompiledInInfo ScriptStructInfo[] = {
+		{ FTriangle::StaticStruct, Z_Construct_UScriptStruct_FTriangle_Statics::NewStructOps, TEXT("Triangle"), &Z_Registration_Info_UScriptStruct_Triangle, CONSTRUCT_RELOAD_VERSION_INFO(FStructReloadVersionInfo, sizeof(FTriangle), 2262215305U) },
+		{ FTerrainGenerationParams::StaticStruct, Z_Construct_UScriptStruct_FTerrainGenerationParams_Statics::NewStructOps, TEXT("TerrainGenerationParams"), &Z_Registration_Info_UScriptStruct_TerrainGenerationParams, CONSTRUCT_RELOAD_VERSION_INFO(FStructReloadVersionInfo, sizeof(FTerrainGenerationParams), 3525034907U) },
+	};
+};
+static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_Users_donut_Documents_LandmassGenerationUnreal_LandmassGeneration_Source_LandmassGeneration_LandmassStructs_h_3891994273(TEXT("/Script/LandmassGeneration"),
+	nullptr, 0,
+	Z_CompiledInDeferFile_FID_Users_donut_Documents_LandmassGenerationUnreal_LandmassGeneration_Source_LandmassGeneration_LandmassStructs_h_Statics::ScriptStructInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_Users_donut_Documents_LandmassGenerationUnreal_LandmassGeneration_Source_LandmassGeneration_LandmassStructs_h_Statics::ScriptStructInfo),
+	nullptr, 0);
+// End Registration
+PRAGMA_ENABLE_DEPRECATION_WARNINGS

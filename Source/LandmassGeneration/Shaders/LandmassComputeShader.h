@@ -46,8 +46,8 @@ public:
         SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<FTriangle>, Triangles)
         SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<uint32>, Counter)
         SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture3D<float>, DensityMap)
-        SHADER_PARAMETER(FUintVector3, VolumeSize)
-        SHADER_PARAMETER(FUintVector3, ChunkCoords)
+        SHADER_PARAMETER(FIntVector, VolumeSize)
+        SHADER_PARAMETER(FIntVector, ChunkCoords)
         SHADER_PARAMETER(uint32, ChunkSize)
     END_SHADER_PARAMETER_STRUCT()
 

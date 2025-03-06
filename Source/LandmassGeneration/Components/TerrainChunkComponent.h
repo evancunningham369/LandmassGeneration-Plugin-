@@ -22,12 +22,12 @@ public:
     void UpdateMesh(const TArray<FTriangle>& Triangles, uint32 TriangleCount);
 
     /** Get chunk coordinates */
-    FUintVector GetChunkCoords() const { return ChunkCoords; }
+    FIntVector GetChunkCoords() const { return ChunkCoords; }
 
     /** Set chunk coordinates */
-    void SetChunkCoords(const FUintVector& InCoords) { ChunkCoords = InCoords; }
+    void SetChunkCoords(const FIntVector& InCoords) { ChunkCoords = InCoords; }
 
 private:
     FDynamicMesh3 Mesh;
-    FUintVector ChunkCoords;
+    FIntVector ChunkCoords;
 };

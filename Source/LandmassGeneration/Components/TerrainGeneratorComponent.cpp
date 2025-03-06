@@ -70,7 +70,7 @@ void UTerrainGeneratorComponent::CreateChunks(const FTerrainGenerationParams& Pa
         {
             for (int32 Z = 0; Z < ChunksZ; Z++)
             {
-                FUintVector ChunkCoords(X, Y, Z);
+                FIntVector ChunkCoords(X, Y, Z);
                 TriangleChunks.Add(ChunkCoords, TArray<FTriangle>());
                 // Create a component for this chunk
                 FString ChunkName = FString::Printf(TEXT("Chunk_%d_%d_%d"), X, Y, Z);
@@ -104,10 +104,21 @@ void UTerrainGeneratorComponent::OnComputeShaderComplete(uint32 TriangleCount)
     UE_LOG(LogTemp, Warning, TEXT("Shader Completed!"));
     UE_LOG(LogTemp, Warning, TEXT("Triangle Count: %d"), TriangleCount);
 
-    /*for (uint32 i = 0; i < 5; i++)
+    for (const TPair<FIntVector, TArray<FTriangle>>& Pair : TriangleChunks)
     {
-        UE_LOG(LogTemp, Warning, TEXT("Data: x: %s y: %s z: %s"), *Triangles[i].Vertex1.ToString(), *Triangles[i].Vertex2.ToString(), *Triangles[i].Vertex3.ToString())
-    }*/
+		FIntVector ChunkCoords = Pair.Key;
+		const TArray<FTriangle>& Triangles = Pair.Value;
+		
+		UE_LOG(LogTemp, Warning, TEXT("Chunk: %s"), *ChunkCoords.ToString());
+
+		for (const FTriangle& Triangle : Triangles)
+		{
+			FVector3f V0 = Triangle.Vertex1;
+			FVector3f V1 = Triangle.Vertex2;
+			FVector3f V2 = Triangle.Vertex3;
+			UE_LOG(LogTemp, Warning, TEXT("Triangle: %s, %s, %s"), *V0.ToString(), *V1.ToString(), *V2.ToString());
+		}
+    }
 
     //// Clear the current generation request ID
     CurrentGenerationRequestId = INDEX_NONE;

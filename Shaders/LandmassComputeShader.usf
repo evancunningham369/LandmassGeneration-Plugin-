@@ -9,13 +9,13 @@ struct Triangle
     float3 vertex3;
 };
 
-uint3 VolumeSize;
-uint3 ChunkCoords;
+int3 VolumeSize;
+int3 ChunkCoords;
 uint ChunkSize;
 
-RWStructuredBuffer<Triangle> Triangles : register(u1); 
-RWTexture3D<float> DensityMap : register(u2);
-RWStructuredBuffer<uint> Counter : register(u3);
+RWStructuredBuffer<Triangle> Triangles; 
+RWTexture3D<float> DensityMap;
+RWStructuredBuffer<uint> Counter;
 
 float GetDensity(int3 coord)
 {
@@ -151,6 +151,7 @@ void MarchingCube(uint3 ThreadId : SV_DispatchThreadID, uint3 GroupId : SV_Group
         
         InterlockedAdd(Counter[0], 1, Index);
         Triangles[Index] = Tri;
+        
     }
 
 }

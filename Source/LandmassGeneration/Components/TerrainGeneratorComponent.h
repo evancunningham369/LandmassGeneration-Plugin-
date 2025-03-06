@@ -17,7 +17,7 @@ struct FTerrainChunkInfo
     GENERATED_BODY()
 
     UPROPERTY()
-    FUintVector ChunkCoords;
+    FIntVector ChunkCoords;
 
     UPROPERTY()
     class UTerrainChunkComponent* ChunkComponent;
@@ -59,7 +59,7 @@ private:
 
     FTerrainGenerationParams TerrainParams;
 
-    TMap<FUintVector, TArray<FTriangle>> TriangleChunks;
+    TMap<FIntVector, TArray<FTriangle>> TriangleChunks;
 
 
     UPROPERTY()
