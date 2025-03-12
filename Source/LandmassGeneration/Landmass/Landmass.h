@@ -42,10 +42,6 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain Generation", meta = (EditCondition = "TerrainQuality == ETerrainQuality::Custom", ClampMin = "8", ClampMax = "512"))
     int32 CustomTerrainDepth = 16;
 
-    // Chunk size
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain Generation", meta = (ClampMin = "8", ClampMax = "64"))
-    int32 ChunkSize = 32;
-
     // Maximum number of triangles to generate
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain Generation", meta = (ClampMin = "10000", ClampMax = "5000000"))
     int32 MaxTriangles = 500000;
@@ -61,10 +57,6 @@ public:
 protected:
     virtual void BeginPlay() override;
     virtual void OnConstruction(const FTransform& Transform) override;
-
-#if WITH_EDITOR
-    virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-#endif
 
 private:
     FTerrainGenerationParams BuildTerrainParams() const;

@@ -33,10 +33,9 @@ float GetDensity(int3 coord)
     return DensityMap[globalCoord];
 }
 
-float3 CoordToWorld(int3 coord)
+int3 CoordToWorld(int3 coord)
 {
     return coord + (ChunkCoords * ChunkSize);
-
 }
 
 float3 GetInterpolatedVertex(float3 VertA, float3 VertB, float ValueA, float ValueB)
@@ -66,11 +65,13 @@ void FillDensity(uint3 ThreadId: SV_DispatchThreadID, uint3 GroupId : SV_GroupID
 [numthreads(8, 8, 8)] // Define threads per group
 void MarchingCube(uint3 ThreadId : SV_DispatchThreadID, uint3 GroupId : SV_GroupID)
 {   
-
+    // Check if the thread is outside the bounds of the volume
+    
     if (any(ThreadId >= VolumeSize - 1))
     {
         return;
     }
+    
     
     int x = ThreadId.x;
     int y = ThreadId.y;
@@ -79,15 +80,11 @@ void MarchingCube(uint3 ThreadId : SV_DispatchThreadID, uint3 GroupId : SV_Group
     //Index for Atomic Counter
     uint Index;
     
-    
-    // Group Id is the coordinates(0 or 7)
-    
-    //Vertices[GlobalIndex] = float4(x, y, z, DensityMap[ThreadId]);
-    
     //corner position
      
     int3 cornerPos[8];
-    float3 WorldCoordinate = CoordToWorld(ThreadId);
+    
+    int3 WorldCoordinate = CoordToWorld(ThreadId);
     
     cornerPos[0] = WorldCoordinate + int3(0, 0, 0);
     cornerPos[1] = WorldCoordinate + int3(1, 0, 0);
@@ -145,6 +142,7 @@ void MarchingCube(uint3 ThreadId : SV_DispatchThreadID, uint3 GroupId : SV_Group
         
         Triangle Tri;
         // Get the mid-point between each vertex
+        
         Tri.vertex1 = GetInterpolatedVertex(cornerPos[Corner1], cornerPos[Corner2], DensityMap[cornerPos[Corner1]], DensityMap[cornerPos[Corner2]]);
         Tri.vertex2 = GetInterpolatedVertex(cornerPos[Corner3], cornerPos[Corner4], DensityMap[cornerPos[Corner3]], DensityMap[cornerPos[Corner4]]);
         Tri.vertex3 = GetInterpolatedVertex(cornerPos[Corner5], cornerPos[Corner6], DensityMap[cornerPos[Corner5]], DensityMap[cornerPos[Corner6]]);
@@ -153,9 +151,21 @@ void MarchingCube(uint3 ThreadId : SV_DispatchThreadID, uint3 GroupId : SV_Group
         Triangles[Index] = Tri;
         
     }
-
 }
 
+// Test Shader
+RWStructuredBuffer<float3> TestBuffer;
+RWStructuredBuffer<uint> TestCounter;
+int3 ChunkLocation;
+
+[numthreads(4, 4, 1)] // Define threads per group
+void TestShader(uint3 ThreadId : SV_DispatchThreadID, uint3 GroupId : SV_GroupID)
+{
+    uint GlobalIndex;
+    InterlockedAdd(TestCounter[0], 1, GlobalIndex);
+    
+    TestBuffer[GlobalIndex] = ChunkLocation + ThreadId;
+}
 
 
 

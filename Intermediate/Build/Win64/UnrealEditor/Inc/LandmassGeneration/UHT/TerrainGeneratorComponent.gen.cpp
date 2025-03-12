@@ -120,14 +120,12 @@ struct Z_Construct_UClass_UTerrainGeneratorComponent_Statics
 	};
 	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_ChunkSize_MetaData[] = {
 		{ "Category", "Terrain Generation" },
-		{ "ClampMax", "64" },
-		{ "ClampMin", "8" },
 #if !UE_BUILD_SHIPPING
-		{ "Comment", "/** The size of each chunk in voxels */" },
+		{ "Comment", "// Chunk size\n" },
 #endif
 		{ "ModuleRelativePath", "Components/TerrainGeneratorComponent.h" },
 #if !UE_BUILD_SHIPPING
-		{ "ToolTip", "The size of each chunk in voxels" },
+		{ "ToolTip", "Chunk size" },
 #endif
 	};
 	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_ChunkInfos_MetaData[] = {
@@ -138,7 +136,7 @@ struct Z_Construct_UClass_UTerrainGeneratorComponent_Statics
 	};
 #endif // WITH_METADATA
 	static const UECodeGen_Private::FIntPropertyParams NewProp_MaxTriangleCount;
-	static const UECodeGen_Private::FUInt32PropertyParams NewProp_ChunkSize;
+	static const UECodeGen_Private::FIntPropertyParams NewProp_ChunkSize;
 	static const UECodeGen_Private::FStructPropertyParams NewProp_ChunkInfos_Inner;
 	static const UECodeGen_Private::FArrayPropertyParams NewProp_ChunkInfos;
 	static const UECodeGen_Private::FObjectPropertyParams NewProp_ShaderSubsystem;
@@ -150,7 +148,7 @@ struct Z_Construct_UClass_UTerrainGeneratorComponent_Statics
 	static const UECodeGen_Private::FClassParams ClassParams;
 };
 const UECodeGen_Private::FIntPropertyParams Z_Construct_UClass_UTerrainGeneratorComponent_Statics::NewProp_MaxTriangleCount = { "MaxTriangleCount", nullptr, (EPropertyFlags)0x0010000000000001, UECodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(UTerrainGeneratorComponent, MaxTriangleCount), METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_MaxTriangleCount_MetaData), NewProp_MaxTriangleCount_MetaData) };
-const UECodeGen_Private::FUInt32PropertyParams Z_Construct_UClass_UTerrainGeneratorComponent_Statics::NewProp_ChunkSize = { "ChunkSize", nullptr, (EPropertyFlags)0x0010000000000001, UECodeGen_Private::EPropertyGenFlags::UInt32, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(UTerrainGeneratorComponent, ChunkSize), METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_ChunkSize_MetaData), NewProp_ChunkSize_MetaData) };
+const UECodeGen_Private::FIntPropertyParams Z_Construct_UClass_UTerrainGeneratorComponent_Statics::NewProp_ChunkSize = { "ChunkSize", nullptr, (EPropertyFlags)0x0010000000020001, UECodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(UTerrainGeneratorComponent, ChunkSize), METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_ChunkSize_MetaData), NewProp_ChunkSize_MetaData) };
 const UECodeGen_Private::FStructPropertyParams Z_Construct_UClass_UTerrainGeneratorComponent_Statics::NewProp_ChunkInfos_Inner = { "ChunkInfos", nullptr, (EPropertyFlags)0x0000008000000000, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, 0, Z_Construct_UScriptStruct_FTerrainChunkInfo, METADATA_PARAMS(0, nullptr) }; // 1969791491
 const UECodeGen_Private::FArrayPropertyParams Z_Construct_UClass_UTerrainGeneratorComponent_Statics::NewProp_ChunkInfos = { "ChunkInfos", nullptr, (EPropertyFlags)0x0040008000000000, UECodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(UTerrainGeneratorComponent, ChunkInfos), EArrayPropertyFlags::None, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_ChunkInfos_MetaData), NewProp_ChunkInfos_MetaData) }; // 1969791491
 const UECodeGen_Private::FObjectPropertyParams Z_Construct_UClass_UTerrainGeneratorComponent_Statics::NewProp_ShaderSubsystem = { "ShaderSubsystem", nullptr, (EPropertyFlags)0x0040000000000000, UECodeGen_Private::EPropertyGenFlags::Object, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(UTerrainGeneratorComponent, ShaderSubsystem), Z_Construct_UClass_ULandmassManagerSubsystem_NoRegister, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_ShaderSubsystem_MetaData), NewProp_ShaderSubsystem_MetaData) };
@@ -205,10 +203,10 @@ struct Z_CompiledInDeferFile_FID_Users_donut_Documents_LandmassGenerationUnreal_
 		{ FTerrainChunkInfo::StaticStruct, Z_Construct_UScriptStruct_FTerrainChunkInfo_Statics::NewStructOps, TEXT("TerrainChunkInfo"), &Z_Registration_Info_UScriptStruct_TerrainChunkInfo, CONSTRUCT_RELOAD_VERSION_INFO(FStructReloadVersionInfo, sizeof(FTerrainChunkInfo), 1969791491U) },
 	};
 	static constexpr FClassRegisterCompiledInInfo ClassInfo[] = {
-		{ Z_Construct_UClass_UTerrainGeneratorComponent, UTerrainGeneratorComponent::StaticClass, TEXT("UTerrainGeneratorComponent"), &Z_Registration_Info_UClass_UTerrainGeneratorComponent, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UTerrainGeneratorComponent), 903711183U) },
+		{ Z_Construct_UClass_UTerrainGeneratorComponent, UTerrainGeneratorComponent::StaticClass, TEXT("UTerrainGeneratorComponent"), &Z_Registration_Info_UClass_UTerrainGeneratorComponent, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UTerrainGeneratorComponent), 2503991045U) },
 	};
 };
-static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_Users_donut_Documents_LandmassGenerationUnreal_LandmassGeneration_Source_LandmassGeneration_Components_TerrainGeneratorComponent_h_1182699249(TEXT("/Script/LandmassGeneration"),
+static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_Users_donut_Documents_LandmassGenerationUnreal_LandmassGeneration_Source_LandmassGeneration_Components_TerrainGeneratorComponent_h_9917311(TEXT("/Script/LandmassGeneration"),
 	Z_CompiledInDeferFile_FID_Users_donut_Documents_LandmassGenerationUnreal_LandmassGeneration_Source_LandmassGeneration_Components_TerrainGeneratorComponent_h_Statics::ClassInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_Users_donut_Documents_LandmassGenerationUnreal_LandmassGeneration_Source_LandmassGeneration_Components_TerrainGeneratorComponent_h_Statics::ClassInfo),
 	Z_CompiledInDeferFile_FID_Users_donut_Documents_LandmassGenerationUnreal_LandmassGeneration_Source_LandmassGeneration_Components_TerrainGeneratorComponent_h_Statics::ScriptStructInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_Users_donut_Documents_LandmassGenerationUnreal_LandmassGeneration_Source_LandmassGeneration_Components_TerrainGeneratorComponent_h_Statics::ScriptStructInfo),
 	nullptr, 0);

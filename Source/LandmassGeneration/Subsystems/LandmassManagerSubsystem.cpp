@@ -4,130 +4,180 @@
 #include "LandmassGeneration/Landmass/Landmass.h"
 #include "RenderGraphBuilder.h"         // Required for FRDGBuilder
 #include <LandmassGeneration/Shaders/LandmassComputeShader.h>
+#include "LandmassGeneration/Components/TerrainChunkComponent.h"
 #include <RenderGraphUtils.h>
 #include <LandmassGeneration/DebugMacros.h>
 
 int32 ULandmassManagerSubsystem::RequestTerrainGeneration(
-	const FTerrainGenerationParams& Params, 
-	const FIntVector& ChunkCount,
-	const uint32& ChunkSize,
-	TMap<FIntVector, TSharedPtr<FTerrainChunkData>>& ChunkDataMap,
+	const TArray<FTerrainChunkInfo>& ChunkInfos,
+	uint32 ChunkSize,
+	uint32 TotalChunks,
 	TFunction<void()> Callback)
 {
-	
+	TriangleReadbackBuffers.Empty();
+
 	UE_LOG(LogTemp, Warning, TEXT("Requesting Terrain Generation..."));
 
 	int32 RequestId = NextRequestId++;
 	PendingCallbacks.Add(RequestId, Callback);
-	
-	int32 ChunksX = ChunkCount.X;
-	int32 ChunksY = ChunkCount.Y;
-	int32 ChunksZ = ChunkCount.Z;
-
 
 	TSharedPtr<int32> ProcessedChunks = MakeShared<int32>(0);
 
-	const int32 TotalChunks = ChunksX * ChunksY * ChunksZ;
+	// Total cubes * number of triangles per cube
+	const uint32 NumTrianglesPerChunk = (ChunkSize * ChunkSize) * 2; // You should calculate this based on your needs
 
-	UE_LOG(LogTemp, Warning, TEXT("Total Chunks: %d"), TotalChunks);
-	
-	UE_LOG(LogTemp, Warning, TEXT("Chunk Size: %d\n ChunksX: %d\n ChunksY: %d\n ChunksZ: %d"), ChunkSize, ChunksX, ChunksY, ChunksZ);
+	UE_LOG(LogTemp, Warning, TEXT("Total Chunks: %d\n Triangles Per Chunk: %d"), TotalChunks, NumTrianglesPerChunk);
+
 	ENQUEUE_RENDER_COMMAND(TerrainGenerationCommand)(
-		[this, Params, RequestId, &ChunkDataMap ,&ChunkSize, ChunksX, ChunksY, ChunksZ, ProcessedChunks, TotalChunks](FRHICommandListImmediate& RHICmdList)
+		[this, RequestId, ChunkSize, &ChunkInfos ,ProcessedChunks, TotalChunks, NumTrianglesPerChunk](FRHICommandListImmediate& RHICmdList)
 		{
 			FRDGBuilder GraphBuilder(RHICmdList);
 
 			// Density pass
 			FRDGTextureUAVRef DensityUAV;
-			AddDensityCubesShaderPass(Params, TotalChunks ,GetWorld(), GraphBuilder, DensityUAV);
+			AddDensityCubesShaderPass(ChunkSize, TotalChunks ,GetWorld(), GraphBuilder, DensityUAV);
 			
-			TMap<FIntVector, FRHIGPUBufferReadback*> TriangleReadbackBuffers;
-			uint32 NumTrianglesPerChunk = 0;
-			for (int32 X = 0; X < ChunksX; X++)
+			
+			// Execute graph for each chunk
+			
+			for (FTerrainChunkInfo ChunkInfo : ChunkInfos)
 			{
-				for (int32 Y = 0; Y < ChunksY; Y++)
-				{
-					for (int32 Z = 0; Z < ChunksZ; Z++)
-					{
 
-						// Marching cubes pass
-						NumTrianglesPerChunk = (Params.Width - 1) * (Params.Depth - 1) * 2; // You should calculate this based on your needs
-						FRDGBufferRef TrianglesOutputBuffer = CreateEmptyBuffer(GraphBuilder, sizeof(FTriangle), NumTrianglesPerChunk);
-						FRDGBufferRef CounterOutputBuffer = CreateEmptyBuffer(GraphBuilder, sizeof(uint32), 1);
+				// Marching cubes pass
+				FRDGBufferRef TrianglesOutputBuffer = CreateEmptyBuffer(GraphBuilder, sizeof(FTriangle), NumTrianglesPerChunk);
+				FRDGBufferRef CounterOutputBuffer = CreateEmptyBuffer(GraphBuilder, sizeof(uint32), 1);
 
-						FRDGBufferUAVRef TrianglesOutputBufferUAV = GraphBuilder.CreateUAV(TrianglesOutputBuffer);
-						FRDGBufferUAVRef CounterOutputBufferUAV = GraphBuilder.CreateUAV(CounterOutputBuffer, PF_R32_UINT);
+				FRDGBufferUAVRef TrianglesOutputBufferUAV = GraphBuilder.CreateUAV(TrianglesOutputBuffer);
+				FRDGBufferUAVRef CounterOutputBufferUAV = GraphBuilder.CreateUAV(CounterOutputBuffer, PF_R32_UINT);
 
-						AddClearUAVPass(GraphBuilder, CounterOutputBufferUAV, 0);
+				AddClearUAVPass(GraphBuilder, CounterOutputBufferUAV, 0);
 
-						TShaderMapRef<FMarchingCubesShader> MarchingCubesShader(GetGlobalShaderMap(GMaxRHIFeatureLevel));
-						FMarchingCubesShader::FParameters* MarchingCubesParams = GraphBuilder.AllocParameters<FMarchingCubesShader::FParameters>();
-						MarchingCubesParams->Triangles = TrianglesOutputBufferUAV;
-						MarchingCubesParams->DensityMap = DensityUAV;
-						MarchingCubesParams->Counter = CounterOutputBufferUAV;
-						MarchingCubesParams->VolumeSize = FIntVector(Params.Width, Params.Depth, Params.Height);
-						MarchingCubesParams->ChunkCoords = FIntVector(X, Y, Z); // Pass chunk coordinates
-						MarchingCubesParams->ChunkSize = ChunkSize; // Pass chunk size
+				TShaderMapRef<FMarchingCubesShader> MarchingCubesShader(GetGlobalShaderMap(GMaxRHIFeatureLevel));
+				FMarchingCubesShader::FParameters* MarchingCubesParams = GraphBuilder.AllocParameters<FMarchingCubesShader::FParameters>();
+				MarchingCubesParams->Triangles = TrianglesOutputBufferUAV;
+				MarchingCubesParams->DensityMap = DensityUAV;
+				MarchingCubesParams->Counter = CounterOutputBufferUAV;
+				MarchingCubesParams->VolumeSize = FIntVector(ChunkSize, ChunkSize, ChunkSize);
+				MarchingCubesParams->ChunkCoords = (FIntVector)ChunkInfo.ChunkComponent->GetComponentLocation();
+				MarchingCubesParams->ChunkSize = ChunkSize;
 
 
-						const uint32 ThreadGroupSize = 8;
+				const uint32 ThreadGroupSize = 8;
 
-						FIntVector MarchingCubesThreadGroups(
-							FMath::DivideAndRoundUp(ChunkSize, ThreadGroupSize),
-							FMath::DivideAndRoundUp(ChunkSize, ThreadGroupSize),
-							FMath::DivideAndRoundUp(ChunkSize, ThreadGroupSize));
+				FIntVector MarchingCubesThreadGroups(
+					1,
+					1,
+					1);
 
 
-						FComputeShaderUtils::AddPass(
-							GraphBuilder,
-							RDG_EVENT_NAME("Marching Cubes Shader Pass"),
-							MarchingCubesShader,
-							MarchingCubesParams,
-							MarchingCubesThreadGroups
-						);
+				FComputeShaderUtils::AddPass(
+					GraphBuilder,
+					RDG_EVENT_NAME("Marching Cubes Shader Pass"),
+					MarchingCubesShader,
+					MarchingCubesParams,
+					MarchingCubesThreadGroups
+				);
 
-						// Setup readback
-						TUniquePtr<FRHIGPUBufferReadback> TriangleReadbackBuffer = MakeUnique<FRHIGPUBufferReadback>(TEXT("Triangle Compute Readback"));
-						AddEnqueueCopyPass(GraphBuilder, TriangleReadbackBuffer.Get(), TrianglesOutputBuffer, sizeof(FTriangle) * NumTrianglesPerChunk);
+				// Setup readback
+				TSharedPtr<FRHIGPUBufferReadback> TriangleReadbackBuffer = MakeShared<FRHIGPUBufferReadback>(TEXT("Triangle Compute Readback"));
+				AddEnqueueCopyPass(GraphBuilder, TriangleReadbackBuffer.Get(), TrianglesOutputBuffer, sizeof(FTriangle) * NumTrianglesPerChunk);
 
-						TriangleReadbackBuffers.Add(FIntVector(X, Y, Z), TriangleReadbackBuffer.Get());
-					}
-				}
+				TriangleReadbackBuffers.Add(TriangleReadbackBuffer, ChunkInfo.ChunkData);
 			}
 			// Execute graph for each chunk
 			
 			GraphBuilder.Execute();
-			AsyncTask(ENamedThreads::GameThread, [TotalChunks, NumTrianglesPerChunk]()
-				{
-					UE_LOG(LogTemp, Warning, TEXT("Executing Graph..."));
-					UE_LOG(LogTemp, Warning, TEXT("\nTotal Chunks : %d \n Triangles Per Chunk: %d"), TotalChunks, NumTrianglesPerChunk);
-				});
 			
-			for (const TPair<FIntVector, FRHIGPUBufferReadback*>& Pair : TriangleReadbackBuffers)
+			// Loop through TriangleReadback Buffers Map
+			for (TPair<TSharedPtr<FRHIGPUBufferReadback>, TSharedPtr<FTerrainChunkData>> Pair : TriangleReadbackBuffers)
 			{
-				FIntVector ChunkCoords = Pair.Key;
-				FRHIGPUBufferReadback* ReadbackBuffer = Pair.Value;
+				TSharedPtr<FRHIGPUBufferReadback> ReadbackBuffer = Pair.Key;
+				TSharedPtr<FTerrainChunkData> ChunkData = Pair.Value;
 
 				ProcessShaderReadback(
-					ReadbackBuffer,
-					ChunkDataMap,
-					ChunkCoords,
+					ReadbackBuffer, 
+					ChunkData,
 					ProcessedChunks, 
 					TotalChunks, 
 					RequestId, 
 					sizeof(FTriangle), 
 					NumTrianglesPerChunk);
 			}
-			
+
 		});
 		
 	return RequestId;
 }
 
+void ULandmassManagerSubsystem::TestShader(const TArray<FTerrainChunkInfo>& ChunkInfos, uint32 ChunkSize)
+{
+	TestNumElementsPerChunk = ChunkSize * ChunkSize;
+	ENQUEUE_RENDER_COMMAND(TestShaderCommand)(
+		[this, &ChunkInfos, ChunkSize](FRHICommandListImmediate& RHICmdList)
+		{
+
+			FRDGBuilder GraphBuilder(RHICmdList);
+
+			for(FTerrainChunkInfo ChunkInfo : ChunkInfos)
+			{
+			TShaderMapRef<FTestShader> TestShader(GetGlobalShaderMap(GMaxRHIFeatureLevel));
+
+			FTestShader::FParameters* TestParams = GraphBuilder.AllocParameters<FTestShader::FParameters>();
+				FRDGBufferRef TestBuffer = GraphBuilder.CreateBuffer(
+					FRDGBufferDesc::CreateStructuredDesc(sizeof(FVector3f), TestNumElementsPerChunk),
+					TEXT("TestBuffer")
+				);
+				FRDGBufferRef CounterOutputBuffer = CreateEmptyBuffer(GraphBuilder, sizeof(uint32), 1);
+
+
+				FRDGBufferUAVRef TestBufferUAV = GraphBuilder.CreateUAV(TestBuffer);
+				FRDGBufferUAVRef CounterOutputBufferUAV = GraphBuilder.CreateUAV(CounterOutputBuffer, PF_R32_UINT);
+
+				AddClearUAVPass(GraphBuilder, CounterOutputBufferUAV, 0);
+
+				TestParams->TestBuffer = TestBufferUAV;
+				TestParams->TestCounter = CounterOutputBufferUAV;
+				TestParams->ChunkLocation = (FIntVector)ChunkInfo.ChunkComponent->GetComponentLocation(); // Pass chunk coordinates
+
+
+				FComputeShaderUtils::AddPass(
+					GraphBuilder,
+					RDG_EVENT_NAME("Test Shader Pass"),
+					TestShader,
+					TestParams,
+					FIntVector(4, 4, 1)
+				);
+
+				TSharedPtr<FRHIGPUBufferReadback> ReadbackBuffer = MakeShared<FRHIGPUBufferReadback>(TEXT("Test Compute Readback"));
+				AddEnqueueCopyPass(GraphBuilder, ReadbackBuffer.Get(), TestBuffer, sizeof(FVector3f) * TestNumElementsPerChunk);
+				ReadbackBuffers.Add(ReadbackBuffer);
+			}
+			GraphBuilder.Execute();
+			//Create ReadbackBuffer
+			for (TSharedPtr<FRHIGPUBufferReadback> ReadbackBuffer : ReadbackBuffers)
+			{
+				if (ReadbackBuffer)
+				{
+					void* Data = ReadbackBuffer->Lock(sizeof(FVector3f) * TestNumElementsPerChunk);
+					if (Data)
+					{
+						FVector3f* VectorData = static_cast<FVector3f*>(Data);
+						/*for (int32 i = 0; i < TestNumElementsPerChunk; i++)
+						{
+							UE_LOG(LogTemp, Warning, TEXT("Vector %d: %s"), i, *VectorData[i].ToString());
+							DRAW_POINT_PERM(FVector(VectorData[i].X * 100, VectorData[i].Y * 100, VectorData[i].Z), FColor::Red);
+						}
+						*/
+						ReadbackBuffer->Unlock();
+					}
+				}
+			}
+		});
+}
+
 void ULandmassManagerSubsystem::ProcessShaderReadback(
-	FRHIGPUBufferReadback* ReadbackBuffer, 
-	TMap<FIntVector, TSharedPtr<FTerrainChunkData>>& ChunkDataMap,
-	FIntVector& ChunkCoords,
+	TSharedPtr<FRHIGPUBufferReadback> ReadbackBuffer,
+	TSharedPtr<FTerrainChunkData> ChunkData,
 	TSharedPtr<int32> ProcessedChunks, 
 	const int32& TotalChunks, 
 	int32 RequestId, 
@@ -137,15 +187,6 @@ void ULandmassManagerSubsystem::ProcessShaderReadback(
 	FString Value = "ProcessingShaderReadback...";
 	PRINT_STRING_ASYNC(Value);
 
-	TSharedPtr<FTerrainChunkData>* ChunkDataPtr = ChunkDataMap.Find(ChunkCoords);
-	if (!ChunkDataPtr || !(*ChunkDataPtr).IsValid())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("No chunk data found for %s"), *ChunkCoords.ToString());
-		return;
-	}
-
-	TSharedPtr<FTerrainChunkData> ChunkData = *ChunkDataPtr;
-
 	if (ReadbackBuffer)
 	{
 		void* Data = ReadbackBuffer->Lock(NumTrianglesPerChunk * ElementSize);
@@ -153,16 +194,12 @@ void ULandmassManagerSubsystem::ProcessShaderReadback(
 		{
 			FTriangle* TriangleData = static_cast<FTriangle*>(Data);
 
-			ChunkData->Triangles.Reserve(NumTrianglesPerChunk);
-
 			for (uint32 i = 0; i < NumTrianglesPerChunk; i++)
 			{
 				ChunkData->Triangles.Add(TriangleData[i]);
 			}
-
 			ChunkData->TriangleCount = NumTrianglesPerChunk;
 			ChunkData->bIsProcessed = true;
-
 
 			ReadbackBuffer->Unlock();
 		}
@@ -177,7 +214,9 @@ void ULandmassManagerSubsystem::ProcessShaderReadback(
 		Value = "Readback buffer invalid";
 		PRINT_STRING_ASYNC(Value);
 	}
+
 	int32 CurrentProcessed = FPlatformAtomics::InterlockedIncrement(ProcessedChunks.Get());
+
 	AsyncTask(ENamedThreads::GameThread, [CurrentProcessed, TotalChunks]()
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Processed Chunks: %d of %d"), CurrentProcessed, TotalChunks);
@@ -191,7 +230,6 @@ void ULandmassManagerSubsystem::ProcessShaderReadback(
 				if (Callback)
 				{
 					(*Callback)();
-					PendingCallbacks.Remove(RequestId);
 				}
 				PendingCallbacks.Remove(RequestId);
 			});
@@ -199,23 +237,20 @@ void ULandmassManagerSubsystem::ProcessShaderReadback(
 }
 
 void ULandmassManagerSubsystem::AddDensityCubesShaderPass(
-	const FTerrainGenerationParams& Params,
+	const uint32& ChunkSize,
 	const int32& TotalChunks,
 	UWorld* World, 
 	FRDGBuilder& GraphBuilder, 
 	FRDGTextureUAVRef& DensityUAV)
 {
 	TShaderMapRef<FDensityComputeShader> DensityShader(GetGlobalShaderMap(GMaxRHIFeatureLevel));
-	uint32 TotalVertices = TotalChunks * Params.NumVertices;
+	uint32 TotalVertices = TotalChunks * (ChunkSize * ChunkSize);
 	// Use RDG for GPU resource management
 	// Create GPU Buffer
 
 	FRDGTextureRef DensityBuffer = CreateTextureBuffer(
 		GraphBuilder,
-		Params,
-		DensityData.GetData(),
-		sizeof(float),
-		TotalVertices,
+		ChunkSize,
 		TEXT("Density Data Buffer")
 	);
 
@@ -232,8 +267,8 @@ void ULandmassManagerSubsystem::AddDensityCubesShaderPass(
 	const uint32 ThreadGroupSize = 8;
 
 	FIntVector DensityThreadGroups(
-		FMath::DivideAndRoundUp(Params.Width, ThreadGroupSize),
-		FMath::DivideAndRoundUp(Params.Width, ThreadGroupSize),
+		1,
+		1,
 		1);
 
 	FComputeShaderUtils::AddPass(
@@ -245,6 +280,8 @@ void ULandmassManagerSubsystem::AddDensityCubesShaderPass(
 	);
 }
 
+
+
 FRDGBufferRef ULandmassManagerSubsystem::CreateEmptyBuffer(FRDGBuilder& GraphBuilder, const uint32& SizeOfElement, const uint32& NumOfElements)
 {
 	return GraphBuilder.CreateBuffer(
@@ -253,10 +290,10 @@ FRDGBufferRef ULandmassManagerSubsystem::CreateEmptyBuffer(FRDGBuilder& GraphBui
 	);
 }
 
-FRDGTextureRef ULandmassManagerSubsystem::CreateTextureBuffer(FRDGBuilder& GraphBuilder, const FTerrainGenerationParams& Params, const void* Data, const uint32& SizeOfElement, const uint32& NumOfElements, const TCHAR* DebugName)
+FRDGTextureRef ULandmassManagerSubsystem::CreateTextureBuffer(FRDGBuilder& GraphBuilder, const uint32& ChunkSize, const TCHAR* DebugName)
 {
 	FRDGTextureDesc Desc = FRDGTextureDesc::Create3D(
-		FIntVector(Params.Width, Params.Depth, Params.Height),
+		FIntVector(ChunkSize, ChunkSize, 2),
 		PF_R32_FLOAT,
 		FClearValueBinding::None,
 		TexCreate_UAV | TexCreate_ShaderResource

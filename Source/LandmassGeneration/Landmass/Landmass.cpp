@@ -32,37 +32,10 @@ void ALandmass::OnConstruction(const FTransform& Transform)
     // Apply settings to the terrain component
     if (TerrainGeneratorComponent)
     {
-        TerrainGeneratorComponent->ChunkSize = ChunkSize;
         TerrainGeneratorComponent->MaxTriangleCount = MaxTriangles;
         TerrainGeneratorComponent->bEnableDebugVisualization = bEnableDebugVisualization;
     }
 }
-
-#if WITH_EDITOR
-void ALandmass::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
-{
-    Super::PostEditChangeProperty(PropertyChangedEvent);
-
-    // Get the name of the property that was changed
-    FName PropertyName = (PropertyChangedEvent.Property != nullptr) ? PropertyChangedEvent.Property->GetFName() : NAME_None;
-
-    // Check if we need to regenerate the terrain
-    if (PropertyName == GET_MEMBER_NAME_CHECKED(ALandmass, TerrainQuality) ||
-        PropertyName == GET_MEMBER_NAME_CHECKED(ALandmass, CustomTerrainWidth) ||
-        PropertyName == GET_MEMBER_NAME_CHECKED(ALandmass, CustomTerrainHeight) ||
-        PropertyName == GET_MEMBER_NAME_CHECKED(ALandmass, CustomTerrainDepth) ||
-        PropertyName == GET_MEMBER_NAME_CHECKED(ALandmass, ChunkSize))
-    {
-        // Apply settings to the terrain component
-        if (TerrainGeneratorComponent)
-        {
-            TerrainGeneratorComponent->ChunkSize = ChunkSize;
-            TerrainGeneratorComponent->MaxTriangleCount = MaxTriangles;
-            TerrainGeneratorComponent->bEnableDebugVisualization = bEnableDebugVisualization;
-        }
-    }
-}
-#endif
 
 void ALandmass::RegenerateTerrain()
 {

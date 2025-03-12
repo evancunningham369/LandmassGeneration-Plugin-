@@ -23,6 +23,7 @@ void UTerrainChunkComponent::UpdateMeshFromSharedData()
 
 void UTerrainChunkComponent::UpdateMesh(const TArray<FTriangle>& Triangles, uint32 TriangleCount)
 {
+    UE_LOG(LogTemp, Warning, TEXT("Updating mesh with %d triangles"), TriangleCount);
     // Start timing the mesh generation
     double StartTime = FPlatformTime::Seconds();
 
@@ -74,7 +75,8 @@ void UTerrainChunkComponent::UpdateMesh(const TArray<FTriangle>& Triangles, uint
     {
 		// Get the vertex position
 		FVector3d VertexPosition = Mesh.GetVertex(VertexIndex);
-        DRAW_POINT_PERM(VertexPosition, FColor::Red);
+		DRAW_POINT_PERM(VertexPosition, FColor::Red);
+		UE_LOG(LogTemp, Warning, TEXT("Vertex Index: %d, Vertex Position: %s"), VertexIndex ,*VertexPosition.ToString());
     }
 
     // Calculate normals for proper lighting/shading

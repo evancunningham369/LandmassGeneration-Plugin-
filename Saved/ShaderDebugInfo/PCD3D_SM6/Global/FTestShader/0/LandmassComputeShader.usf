@@ -1,0 +1,20 @@
+#line 1 "MoveShaderParametersToRootConstantBuffer"
+cbuffer _RootShaderParameters
+{
+int3 ChunkLocation : packoffset(c1);
+int3 ThreadsPerGroup : packoffset(c2);
+}
+
+// DebugHash_dbd764ac59263d0e877ad7d4e1b953c3153e80936ad12d904fe5434c5f071a64
+#line 1 "__UE_FILENAME_SENTINEL"
+RWStructuredBuffer<float3> TestBuffer;
+RWStructuredBuffer<uint> TestCounter;
+                   
+                     
+[numthreads(ThreadsPerGroup.x, ThreadsPerGroup.y, 1)] 
+void TestShader(uint3 ThreadId : SV_DispatchThreadID, uint3 GroupId : SV_GroupID)
+{
+    uint GlobalIndex;
+    InterlockedAdd(TestCounter[0], 1, GlobalIndex);
+    TestBuffer[GlobalIndex] = ChunkLocation + ThreadId;
+}

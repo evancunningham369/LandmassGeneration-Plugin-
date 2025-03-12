@@ -47,15 +47,19 @@ public:
     UPROPERTY(EditAnywhere, Category = "Terrain Generation")
     int32 MaxTriangleCount = 500000;
 
-    /** The size of each chunk in voxels */
-    UPROPERTY(EditAnywhere, Category = "Terrain Generation", meta = (ClampMin = "8", ClampMax = "64"))
-    uint32 ChunkSize = 16;
+    int32 ChunksX = 1;
+    int32 ChunksY = 1;
+    int32 ChunksZ = 1;
+
+    // Chunk size
+    UPROPERTY(VisibleAnywhere, Category = "Terrain Generation")
+    int32 ChunkSize = 8;
 
     bool bEnableDebugVisualization = false;
 
 private:
     /** Create chunks based on terrain parameters */
-    FIntVector CreateChunks(const FTerrainGenerationParams& Params);
+    void CreateChunks(const FTerrainGenerationParams& Params);
 
     /** Calculate which chunk a point belongs to */
     FIntVector GetChunkCoordsForPoint(const FVector& Point) const;

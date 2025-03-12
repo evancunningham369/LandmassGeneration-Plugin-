@@ -53,3 +53,23 @@ public:
 
 };
 
+class FTestShader : public FGlobalShader
+{
+    DECLARE_GLOBAL_SHADER(FTestShader);
+    SHADER_USE_PARAMETER_STRUCT(FTestShader, FGlobalShader);
+public:
+	static bool ShouldCompilePermutation(const FGlobalShaderPermutationParameters& Parameters)
+	{
+		return IsFeatureLevelSupported(Parameters.Platform, ERHIFeatureLevel::SM5);
+	}
+	static void ModifyCompilationEnvironment(const FGlobalShaderPermutationParameters& Parameters, FShaderCompilerEnvironment& OutEnvironment)
+	{
+		FGlobalShader::ModifyCompilationEnvironment(Parameters, OutEnvironment);
+		OutEnvironment.SetDefine(TEXT("COMPUTE_SHADER"), 1);
+	}
+	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
+		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<FVector3f>, TestBuffer)
+        SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<uint32>, TestCounter)
+        SHADER_PARAMETER(FIntVector, ChunkLocation)
+	END_SHADER_PARAMETER_STRUCT()
+};

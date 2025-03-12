@@ -5,11 +5,13 @@
 #include "CoreMinimal.h"
 #include "Subsystems/WorldSubsystem.h"
 #include <LandmassGeneration/LandmassStructs.h>
+#include <LandmassGeneration/Components/TerrainGeneratorComponent.h>
 #include "LandmassManagerSubsystem.generated.h"
 
 /**
  * 
  */
+
 UCLASS()
 class LANDMASSGENERATION_API ULandmassManagerSubsystem : public UWorldSubsystem
 {
@@ -18,20 +20,23 @@ class LANDMASSGENERATION_API ULandmassManagerSubsystem : public UWorldSubsystem
 public:
 
 	int32 RequestTerrainGeneration(
-		const FTerrainGenerationParams& Params,
-		const FIntVector& ChunkCount,
-		const uint32& ChunkSize,
-		TMap<FIntVector, TSharedPtr<FTerrainChunkData>>& ChunkDataMap,
+		const TArray<FTerrainChunkInfo>& ChunkInfos,
+		uint32 ChunkSize,
+		uint32 TotalChunks,
 		TFunction<void()> Callback);
+
+	void TestShader(const TArray<FTerrainChunkInfo>& ChunkInfos, uint32 ChunkSize);
 
 	void CancelRequest(int32 RequestId);
 
 private:
 	TArray<float> DensityData;
+	TMap<TSharedPtr<FRHIGPUBufferReadback>, TSharedPtr<FTerrainChunkData>> TriangleReadbackBuffers;
+	TArray<TSharedPtr<FRHIGPUBufferReadback>> ReadbackBuffers;
+	int32 TestNumElementsPerChunk;
 	void ProcessShaderReadback(
-		FRHIGPUBufferReadback* ReadbackBuffer, 
-		TMap<FIntVector, TSharedPtr<FTerrainChunkData>>& ChunkDataMap,
-		FIntVector& ChunkCoords,
+		TSharedPtr<FRHIGPUBufferReadback> ReadbackBuffer,
+		TSharedPtr<FTerrainChunkData> ChunkData,
 		TSharedPtr<int32> ProcessedChunks, 
 		const int32& TotalChunks ,
 		int32 RequestId, 
@@ -44,12 +49,12 @@ private:
 	int32 NextRequestId;
 
 	void AddDensityCubesShaderPass(
-		const FTerrainGenerationParams& Params, 
-		const int32& TotalChunks ,
+		const uint32& ChunkSize, 
+		const int32& TotalChunks,
 		UWorld* World, 
 		FRDGBuilder& GraphBuilder, 
 		FRDGTextureUAVRef& DensityUAV);
 
 	FRDGBufferRef CreateEmptyBuffer(FRDGBuilder& GraphBuilder, const uint32& SizeOfElement, const uint32& NumOfElements);
-	FRDGTextureRef CreateTextureBuffer(FRDGBuilder& GraphBuilder, const FTerrainGenerationParams& Params, const void* Data, const uint32& SizeOfElement, const uint32& NumOfElements, const TCHAR* DebugName);
+	FRDGTextureRef CreateTextureBuffer(FRDGBuilder& GraphBuilder, const uint32& ChunkSize, const TCHAR* DebugName);
 };

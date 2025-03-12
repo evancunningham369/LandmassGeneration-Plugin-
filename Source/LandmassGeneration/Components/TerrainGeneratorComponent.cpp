@@ -12,13 +12,15 @@ UTerrainGeneratorComponent::UTerrainGeneratorComponent()
 {
 }
 
+
+
 void UTerrainGeneratorComponent::GenerateTerrain(const FTerrainGenerationParams& Params)
 {
     // Store the parameters
     TerrainParams = Params;
 
     // Create the chunks
-    FIntVector ChunkCount = CreateChunks(TerrainParams);
+    CreateChunks(TerrainParams);
 
     // Get the subsystem
     if (!ShaderSubsystem)
@@ -35,18 +37,19 @@ void UTerrainGeneratorComponent::GenerateTerrain(const FTerrainGenerationParams&
 
     // Request terrain generation
     CurrentGenerationRequestId = ShaderSubsystem->RequestTerrainGeneration(
-        TerrainParams,
-        ChunkCount,
+        ChunkInfos,
 		ChunkSize,
-        ChunkDataMap,
+		ChunksX * ChunksY * ChunksZ,
         [this]()
         {
             OnComputeShaderComplete();
         }
     );
+
+    //ShaderSubsystem->TestShader(ChunkInfos, ChunkSize);
 }
 
-FIntVector UTerrainGeneratorComponent::CreateChunks(const FTerrainGenerationParams& Params)
+void UTerrainGeneratorComponent::CreateChunks(const FTerrainGenerationParams& Params)
 {
     // Clear existing chunks
     for (FTerrainChunkInfo& ChunkInfo : ChunkInfos)
@@ -60,9 +63,6 @@ FIntVector UTerrainGeneratorComponent::CreateChunks(const FTerrainGenerationPara
     ChunkDataMap.Empty();
     
     // Calculate how many chunks we need in each dimension
-	int32 ChunksX = FMath::CeilToInt((float)Params.Width / ChunkSize);
-	int32 ChunksY = FMath::CeilToInt((float)Params.Depth / ChunkSize);
-	int32 ChunksZ = FMath::CeilToInt((float)Params.Height / ChunkSize);
 
 	FIntVector ChunkCount(ChunksX, ChunksY, ChunksZ);
 
@@ -92,12 +92,12 @@ FIntVector UTerrainGeneratorComponent::CreateChunks(const FTerrainGenerationPara
 
                 // Position the chunk in world space
                 FVector ChunkPosition(
-                    X * ChunkSize * WorldScale,
-                    Y * ChunkSize * WorldScale,
-                    Z * ChunkSize * WorldScale
+                    X * ChunkSize,
+                    Y * ChunkSize,
+                    Z * ChunkSize
                 );
+				UE_LOG(LogTemp, Warning, TEXT("Chunk Position: %s"), *ChunkPosition.ToString());
                 ChunkComponent->SetRelativeLocation(ChunkPosition);
-                DRAW_POINT_PERM(ChunkPosition, FColor::Red);
                 // Store the chunk info
                 FTerrainChunkInfo ChunkInfo;
                 ChunkInfo.ChunkCoords = ChunkCoords;
@@ -107,7 +107,6 @@ FIntVector UTerrainGeneratorComponent::CreateChunks(const FTerrainGenerationPara
             }
         }
     }
-    return ChunkCount;
 }
 
 void UTerrainGeneratorComponent::OnComputeShaderComplete()
@@ -123,7 +122,7 @@ void UTerrainGeneratorComponent::OnComputeShaderComplete()
         }
 
         // Access the shared data
-        const TSharedPtr<FTerrainChunkData>& ChunkData = ChunkInfo.ChunkData;
+        const TSharedPtr<FTerrainChunkData> ChunkData = ChunkInfo.ChunkData;
 
         if (ChunkData->bIsProcessed)
         {
