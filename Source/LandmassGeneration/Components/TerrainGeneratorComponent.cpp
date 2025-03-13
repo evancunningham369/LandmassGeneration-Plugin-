@@ -96,7 +96,6 @@ void UTerrainGeneratorComponent::CreateChunks(const FTerrainGenerationParams& Pa
                     Y * ChunkSize,
                     Z * ChunkSize
                 );
-				UE_LOG(LogTemp, Warning, TEXT("Chunk Position: %s"), *ChunkPosition.ToString());
                 ChunkComponent->SetRelativeLocation(ChunkPosition);
                 // Store the chunk info
                 FTerrainChunkInfo ChunkInfo;

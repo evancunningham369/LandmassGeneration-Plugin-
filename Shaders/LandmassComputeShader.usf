@@ -20,22 +20,14 @@ RWStructuredBuffer<uint> Counter;
 float GetDensity(int3 coord)
 {
     // Calculate global coordinates within the volume
-    uint3 globalCoord = coord + (ChunkCoords * ChunkSize);
-    
-    // Check bounds
-    if (globalCoord.x < 0 || globalCoord.x >= VolumeSize.x ||
-        globalCoord.y < 0 || globalCoord.y >= VolumeSize.y ||
-        globalCoord.z < 0 || globalCoord.z >= VolumeSize.z)
-    {
-        return 0.0f; // Outside bounds, return default value
-    }
+    uint3 globalCoord = coord + ChunkCoords;
     
     return DensityMap[globalCoord];
 }
 
 int3 CoordToWorld(int3 coord)
 {
-    return coord + (ChunkCoords * ChunkSize);
+    return coord + ChunkCoords;
 }
 
 float3 GetInterpolatedVertex(float3 VertA, float3 VertB, float ValueA, float ValueB)
@@ -44,7 +36,7 @@ float3 GetInterpolatedVertex(float3 VertA, float3 VertB, float ValueA, float Val
     float3 VertexPosition = VertA + t * (VertB - VertA);
     
     VertexPosition.z = 0.5f;
-    return VertexPosition;
+    return VertexPosition + ChunkCoords;
 }
 // CHANGE THIS THREAD Z VALUE WHEN YOU CHANGE THE HEIGHT OF MESH!!
 //Number of vertices
@@ -83,17 +75,24 @@ void MarchingCube(uint3 ThreadId : SV_DispatchThreadID, uint3 GroupId : SV_Group
     //corner position
      
     int3 cornerPos[8];
-    
     int3 WorldCoordinate = CoordToWorld(ThreadId);
+    /*
+    Triangle Tri;
+    Tri.vertex1 = WorldCoordinate;
+    Tri.vertex2 = WorldCoordinate;
+    Tri.vertex3 = WorldCoordinate;
     
-    cornerPos[0] = WorldCoordinate + int3(0, 0, 0);
-    cornerPos[1] = WorldCoordinate + int3(1, 0, 0);
-    cornerPos[2] = WorldCoordinate + int3(1, 0, 1);
-    cornerPos[3] = WorldCoordinate + int3(0, 0, 1);
-    cornerPos[4] = WorldCoordinate + int3(0, 1, 0);
-    cornerPos[5] = WorldCoordinate + int3(1, 1, 0);
-    cornerPos[6] = WorldCoordinate + int3(1, 1, 1);
-    cornerPos[7] = WorldCoordinate + int3(0, 1, 1);
+    InterlockedAdd(Counter[0], 1, Index);
+    Triangles[Index] = Tri;
+    */
+    cornerPos[0] = ThreadId + int3(0, 0, 0);
+    cornerPos[1] = ThreadId + int3(1, 0, 0);
+    cornerPos[2] = ThreadId + int3(1, 0, 1);
+    cornerPos[3] = ThreadId + int3(0, 0, 1);
+    cornerPos[4] = ThreadId + int3(0, 1, 0);
+    cornerPos[5] = ThreadId + int3(1, 1, 0);
+    cornerPos[6] = ThreadId + int3(1, 1, 1);
+    cornerPos[7] = ThreadId + int3(0, 1, 1);
     
     int CubeIndex = 0;
     for (int i = 0; i < 8; i++)
@@ -107,15 +106,6 @@ void MarchingCube(uint3 ThreadId : SV_DispatchThreadID, uint3 GroupId : SV_Group
     
     if (CubeIndex == 0 || CubeIndex == 255)
     {
-        
-        //Triangle DummyTri;
-        // Get the mid-point between each vertex
-        //DummyTri.vertex1 = float3(-1,-1,-1);
-        //DummyTri.vertex2 = float3(-1,-1,-1);
-        //DummyTri.vertex3 = float3(-1,-1,-1);
-
-        //Triangles[Index] = DummyTri;
-        
         return;
     }
      
@@ -147,10 +137,12 @@ void MarchingCube(uint3 ThreadId : SV_DispatchThreadID, uint3 GroupId : SV_Group
         Tri.vertex2 = GetInterpolatedVertex(cornerPos[Corner3], cornerPos[Corner4], DensityMap[cornerPos[Corner3]], DensityMap[cornerPos[Corner4]]);
         Tri.vertex3 = GetInterpolatedVertex(cornerPos[Corner5], cornerPos[Corner6], DensityMap[cornerPos[Corner5]], DensityMap[cornerPos[Corner6]]);
         
+        
         InterlockedAdd(Counter[0], 1, Index);
         Triangles[Index] = Tri;
         
     }
+
 }
 
 // Test Shader

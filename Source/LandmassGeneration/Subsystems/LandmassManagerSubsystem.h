@@ -49,8 +49,8 @@ private:
 	int32 NextRequestId;
 
 	void AddDensityCubesShaderPass(
-		const uint32& ChunkSize, 
-		const int32& TotalChunks,
+		const uint32& ChunkSize,
+		const FIntVector& ChunkCoords,
 		UWorld* World, 
 		FRDGBuilder& GraphBuilder, 
 		FRDGTextureUAVRef& DensityUAV);

@@ -21,6 +21,7 @@ public:
 
     BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
         SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture3D<float>, DensityMap)
+        SHADER_PARAMETER(FIntVector, ChunkCoords)
     END_SHADER_PARAMETER_STRUCT()
 };
 

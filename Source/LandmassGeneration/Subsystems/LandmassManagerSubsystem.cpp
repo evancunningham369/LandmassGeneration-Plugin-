@@ -24,24 +24,24 @@ int32 ULandmassManagerSubsystem::RequestTerrainGeneration(
 	TSharedPtr<int32> ProcessedChunks = MakeShared<int32>(0);
 
 	// Total cubes * number of triangles per cube
-	const uint32 NumTrianglesPerChunk = (ChunkSize * ChunkSize) * 2; // You should calculate this based on your needs
+	const uint32 NumTrianglesPerChunk = (ChunkSize - 1) * (ChunkSize - 1) * 2; // You should calculate this based on your needs
 
 	UE_LOG(LogTemp, Warning, TEXT("Total Chunks: %d\n Triangles Per Chunk: %d"), TotalChunks, NumTrianglesPerChunk);
-
 	ENQUEUE_RENDER_COMMAND(TerrainGenerationCommand)(
 		[this, RequestId, ChunkSize, &ChunkInfos ,ProcessedChunks, TotalChunks, NumTrianglesPerChunk](FRHICommandListImmediate& RHICmdList)
 		{
 			FRDGBuilder GraphBuilder(RHICmdList);
 
-			// Density pass
-			FRDGTextureUAVRef DensityUAV;
-			AddDensityCubesShaderPass(ChunkSize, TotalChunks ,GetWorld(), GraphBuilder, DensityUAV);
 			
 			
 			// Execute graph for each chunk
 			
 			for (FTerrainChunkInfo ChunkInfo : ChunkInfos)
 			{
+				// Density pass
+				FRDGTextureUAVRef DensityUAV;
+				FIntVector ChunkCoords = (FIntVector)ChunkInfo.ChunkComponent->GetComponentLocation();
+				AddDensityCubesShaderPass(ChunkSize, ChunkCoords ,GetWorld(), GraphBuilder, DensityUAV);
 
 				// Marching cubes pass
 				FRDGBufferRef TrianglesOutputBuffer = CreateEmptyBuffer(GraphBuilder, sizeof(FTriangle), NumTrianglesPerChunk);
@@ -57,16 +57,15 @@ int32 ULandmassManagerSubsystem::RequestTerrainGeneration(
 				MarchingCubesParams->Triangles = TrianglesOutputBufferUAV;
 				MarchingCubesParams->DensityMap = DensityUAV;
 				MarchingCubesParams->Counter = CounterOutputBufferUAV;
-				MarchingCubesParams->VolumeSize = FIntVector(ChunkSize, ChunkSize, ChunkSize);
-				MarchingCubesParams->ChunkCoords = (FIntVector)ChunkInfo.ChunkComponent->GetComponentLocation();
+				MarchingCubesParams->VolumeSize = FIntVector(ChunkSize, ChunkSize, 2);
+				MarchingCubesParams->ChunkCoords = ChunkCoords;
 				MarchingCubesParams->ChunkSize = ChunkSize;
-
 
 				const uint32 ThreadGroupSize = 8;
 
 				FIntVector MarchingCubesThreadGroups(
-					1,
-					1,
+					FMath::DivideAndRoundUp(ChunkSize, ThreadGroupSize),
+					FMath::DivideAndRoundUp(ChunkSize, ThreadGroupSize),
 					1);
 
 
@@ -194,9 +193,17 @@ void ULandmassManagerSubsystem::ProcessShaderReadback(
 		{
 			FTriangle* TriangleData = static_cast<FTriangle*>(Data);
 
-			for (uint32 i = 0; i < NumTrianglesPerChunk; i++)
+			for (uint32 i = 0; i < 10; i++)
 			{
-				ChunkData->Triangles.Add(TriangleData[i]);
+				//ChunkData->Triangles.Add(TriangleData[i]);
+				FVector Vertex1 = (FVector)TriangleData[i].Vertex1;
+				FVector Vertex2 = (FVector)TriangleData[i].Vertex2;
+				FVector Vertex3 = (FVector)TriangleData[i].Vertex3;
+				DRAW_POINT_PERM(Vertex1 * 100, FColor::Red);
+				DRAW_POINT_PERM(Vertex2 * 100, FColor::Red);
+				DRAW_POINT_PERM(Vertex3 * 100, FColor::Red);
+
+				UE_LOG(LogTemp, Warning, TEXT("Triangle %d: Vertex1: %s, Vertex2: %s, Vertex3: %s"), i, *Vertex1.ToString(), *Vertex2.ToString(), *Vertex3.ToString());
 			}
 			ChunkData->TriangleCount = NumTrianglesPerChunk;
 			ChunkData->bIsProcessed = true;
@@ -223,7 +230,7 @@ void ULandmassManagerSubsystem::ProcessShaderReadback(
 		});
 	if (CurrentProcessed == TotalChunks)
 	{
-		AsyncTask(ENamedThreads::GameThread, [this, TotalChunks ,RequestId]()
+		/*AsyncTask(ENamedThreads::GameThread, [this, TotalChunks ,RequestId]()
 			{
 				UE_LOG(LogTemp, Warning, TEXT("Processed all %d Chunks"), TotalChunks)
 				TFunction<void()>* Callback = PendingCallbacks.Find(RequestId);
@@ -232,19 +239,19 @@ void ULandmassManagerSubsystem::ProcessShaderReadback(
 					(*Callback)();
 				}
 				PendingCallbacks.Remove(RequestId);
-			});
+			});*/
 	}
 }
 
 void ULandmassManagerSubsystem::AddDensityCubesShaderPass(
 	const uint32& ChunkSize,
-	const int32& TotalChunks,
+	const FIntVector& ChunkCoords,
 	UWorld* World, 
 	FRDGBuilder& GraphBuilder, 
 	FRDGTextureUAVRef& DensityUAV)
 {
 	TShaderMapRef<FDensityComputeShader> DensityShader(GetGlobalShaderMap(GMaxRHIFeatureLevel));
-	uint32 TotalVertices = TotalChunks * (ChunkSize * ChunkSize);
+	uint32 TotalVertices = ChunkSize * ChunkSize;
 	// Use RDG for GPU resource management
 	// Create GPU Buffer
 
@@ -260,6 +267,7 @@ void ULandmassManagerSubsystem::AddDensityCubesShaderPass(
 	// Allocate parameters
 	FDensityComputeShader::FParameters* DensityParams = GraphBuilder.AllocParameters<FDensityComputeShader::FParameters>();
 	DensityParams->DensityMap = DensityUAV;
+	DensityParams->ChunkCoords = ChunkCoords;
 
 
 	// Dispatch the compute shader using FComputeShaderUtils
@@ -267,8 +275,8 @@ void ULandmassManagerSubsystem::AddDensityCubesShaderPass(
 	const uint32 ThreadGroupSize = 8;
 
 	FIntVector DensityThreadGroups(
-		1,
-		1,
+		FMath::DivideAndRoundUp(ChunkSize, ThreadGroupSize),
+		FMath::DivideAndRoundUp(ChunkSize, ThreadGroupSize),
 		1);
 
 	FComputeShaderUtils::AddPass(
