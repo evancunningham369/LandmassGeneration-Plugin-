@@ -12,8 +12,6 @@ UTerrainGeneratorComponent::UTerrainGeneratorComponent()
 {
 }
 
-
-
 void UTerrainGeneratorComponent::GenerateTerrain(const FTerrainGenerationParams& Params)
 {
     // Store the parameters

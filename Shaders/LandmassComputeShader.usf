@@ -17,19 +17,6 @@ RWStructuredBuffer<Triangle> Triangles;
 RWTexture3D<float> DensityMap;
 RWStructuredBuffer<uint> Counter;
 
-float GetDensity(int3 coord)
-{
-    // Calculate global coordinates within the volume
-    uint3 globalCoord = coord + ChunkCoords;
-    
-    return DensityMap[globalCoord];
-}
-
-int3 CoordToWorld(int3 coord)
-{
-    return coord + ChunkCoords;
-}
-
 float3 GetInterpolatedVertex(float3 VertA, float3 VertB, float ValueA, float ValueB)
 {
     float t = (0 - ValueA) / (ValueB - ValueA);
@@ -75,7 +62,6 @@ void MarchingCube(uint3 ThreadId : SV_DispatchThreadID, uint3 GroupId : SV_Group
     //corner position
      
     int3 cornerPos[8];
-    int3 WorldCoordinate = CoordToWorld(ThreadId);
     /*
     Triangle Tri;
     Tri.vertex1 = WorldCoordinate;
@@ -97,7 +83,7 @@ void MarchingCube(uint3 ThreadId : SV_DispatchThreadID, uint3 GroupId : SV_Group
     int CubeIndex = 0;
     for (int i = 0; i < 8; i++)
     {
-        if (GetDensity(cornerPos[i])  > 0)
+        if (DensityMap[cornerPos[i]]  > 0)
         {
             CubeIndex |= (1U << i);
         }
