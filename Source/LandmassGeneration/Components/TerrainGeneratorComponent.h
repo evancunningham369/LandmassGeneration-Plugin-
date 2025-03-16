@@ -47,8 +47,8 @@ public:
     UPROPERTY(EditAnywhere, Category = "Terrain Generation")
     int32 MaxTriangleCount = 500000;
 
-    int32 ChunksX = 2;
-    int32 ChunksY = 2;
+    int32 ChunksX = 1;
+    int32 ChunksY = 1;
     int32 ChunksZ = 1;
 
     // Chunk size

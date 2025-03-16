@@ -21,16 +21,15 @@ float3 GetInterpolatedVertex(float3 VertA, float3 VertB, float ValueA, float Val
 {
     float t = (0 - ValueA) / (ValueB - ValueA);
     float3 VertexPosition = VertA + t * (VertB - VertA);
-    
-    VertexPosition.z = 0.5f;
+ 
     return VertexPosition + ChunkCoords;
 }
-// CHANGE THIS THREAD Z VALUE WHEN YOU CHANGE THE HEIGHT OF MESH!!
+
 //Number of vertices
-[numthreads(8, 8, 2)]
+[numthreads(8, 8, 8)]
 void FillDensity(uint3 ThreadId: SV_DispatchThreadID, uint3 GroupId : SV_GroupID)
 {
-    if (ThreadId.z == 1)
+    if (ThreadId.z == 7)
     {
         DensityMap[ThreadId] = 1.f;
     }
@@ -41,16 +40,10 @@ void FillDensity(uint3 ThreadId: SV_DispatchThreadID, uint3 GroupId : SV_GroupID
 }
 
 // Number of cubes
-[numthreads(8, 8, 8)] // Define threads per group
+[numthreads(7, 7, 7)] // Define threads per group
 void MarchingCube(uint3 ThreadId : SV_DispatchThreadID, uint3 GroupId : SV_GroupID)
 {   
     // Check if the thread is outside the bounds of the volume
-    
-    if (any(ThreadId >= VolumeSize - 1))
-    {
-        return;
-    }
-    
     
     int x = ThreadId.x;
     int y = ThreadId.y;

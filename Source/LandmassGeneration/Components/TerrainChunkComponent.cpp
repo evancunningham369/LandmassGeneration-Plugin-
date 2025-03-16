@@ -71,13 +71,13 @@ void UTerrainChunkComponent::UpdateMesh(const TArray<FTriangle>& Triangles, uint
     }
 
 	//Iterate over Mesh vertices
-  //  for (int32 VertexIndex = 0; VertexIndex < Mesh.MaxVertexID(); VertexIndex++)
-  //  {
-		//// Get the vertex position
-		//FVector3d VertexPosition = Mesh.GetVertex(VertexIndex);
-		//DRAW_POINT_PERM(VertexPosition, FColor::Red);
-		//UE_LOG(LogTemp, Warning, TEXT("Vertex Index: %d, Vertex Position: %s"), VertexIndex ,*VertexPosition.ToString());
-  //  }
+    for (int32 VertexIndex = 0; VertexIndex < Mesh.MaxVertexID(); VertexIndex++)
+    {
+		// Get the vertex position
+		FVector3d VertexPosition = Mesh.GetVertex(VertexIndex);
+		DRAW_POINT_PERM(VertexPosition, FColor::Red);
+		UE_LOG(LogTemp, Warning, TEXT("Vertex Index: %d, Vertex Position: %s"), VertexIndex ,*VertexPosition.ToString());
+    }
 
     // Calculate normals for proper lighting/shading
     FMeshNormals::QuickComputeVertexNormals(Mesh);

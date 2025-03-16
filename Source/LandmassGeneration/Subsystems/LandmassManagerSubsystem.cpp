@@ -66,7 +66,7 @@ int32 ULandmassManagerSubsystem::RequestTerrainGeneration(
 				FIntVector MarchingCubesThreadGroups(
 					FMath::DivideAndRoundUp(ChunkSize, ThreadGroupSize),
 					FMath::DivideAndRoundUp(ChunkSize, ThreadGroupSize),
-					1);
+					FMath::DivideAndRoundUp(ChunkSize, ThreadGroupSize));
 
 
 				FComputeShaderUtils::AddPass(
@@ -195,7 +195,18 @@ void ULandmassManagerSubsystem::ProcessShaderReadback(
 
 			for (uint32 i = 0; i < NumTrianglesPerChunk; i++)
 			{
-				ChunkData->Triangles.Add(TriangleData[i]);
+				//ChunkData->Triangles.Add(TriangleData[i]);
+				
+				// print out the triangle vertices
+				UE_LOG(LogTemp, Warning, TEXT("Triangle %d: %s"), i, *TriangleData[i].Vertex1.ToString());
+				UE_LOG(LogTemp, Warning, TEXT("Triangle %d: %s"), i, *TriangleData[i].Vertex2.ToString());
+				UE_LOG(LogTemp, Warning, TEXT("Triangle %d: %s"), i, *TriangleData[i].Vertex3.ToString());
+				AsyncTask(ENamedThreads::GameThread, [this, TriangleData, i]()
+					{
+						DRAW_POINT_PERM((FVector)TriangleData[i].Vertex1 * 100, FColor::Red);
+						DRAW_POINT_PERM((FVector)TriangleData[i].Vertex2 * 100, FColor::Red);
+						DRAW_POINT_PERM((FVector)TriangleData[i].Vertex3 * 100, FColor::Red);
+					});
 			}
 			ChunkData->TriangleCount = NumTrianglesPerChunk;
 			ChunkData->bIsProcessed = true;
@@ -222,7 +233,7 @@ void ULandmassManagerSubsystem::ProcessShaderReadback(
 		});
 	if (CurrentProcessed == TotalChunks)
 	{
-		AsyncTask(ENamedThreads::GameThread, [this, TotalChunks ,RequestId]()
+		/*AsyncTask(ENamedThreads::GameThread, [this, TotalChunks ,RequestId]()
 			{
 				UE_LOG(LogTemp, Warning, TEXT("Processed all %d Chunks"), TotalChunks)
 				TFunction<void()>* Callback = PendingCallbacks.Find(RequestId);
@@ -231,7 +242,7 @@ void ULandmassManagerSubsystem::ProcessShaderReadback(
 					(*Callback)();
 				}
 				PendingCallbacks.Remove(RequestId);
-			});
+			});*/
 	}
 }
 
@@ -243,7 +254,7 @@ void ULandmassManagerSubsystem::AddDensityCubesShaderPass(
 	FRDGTextureUAVRef& DensityUAV)
 {
 	TShaderMapRef<FDensityComputeShader> DensityShader(GetGlobalShaderMap(GMaxRHIFeatureLevel));
-	uint32 TotalVertices = ChunkSize * ChunkSize;
+	uint32 TotalVertices = ChunkSize * ChunkSize * ChunkSize;
 	// Use RDG for GPU resource management
 	// Create GPU Buffer
 
@@ -269,7 +280,7 @@ void ULandmassManagerSubsystem::AddDensityCubesShaderPass(
 	FIntVector DensityThreadGroups(
 		FMath::DivideAndRoundUp(ChunkSize, ThreadGroupSize),
 		FMath::DivideAndRoundUp(ChunkSize, ThreadGroupSize),
-		1);
+		FMath::DivideAndRoundUp(ChunkSize, ThreadGroupSize));
 
 	FComputeShaderUtils::AddPass(
 		GraphBuilder,
@@ -293,7 +304,7 @@ FRDGBufferRef ULandmassManagerSubsystem::CreateEmptyBuffer(FRDGBuilder& GraphBui
 FRDGTextureRef ULandmassManagerSubsystem::CreateTextureBuffer(FRDGBuilder& GraphBuilder, const uint32& ChunkSize, const TCHAR* DebugName)
 {
 	FRDGTextureDesc Desc = FRDGTextureDesc::Create3D(
-		FIntVector(ChunkSize, ChunkSize, 2),
+		FIntVector(ChunkSize, ChunkSize, ChunkSize),
 		PF_R32_FLOAT,
 		FClearValueBinding::None,
 		TexCreate_UAV | TexCreate_ShaderResource
