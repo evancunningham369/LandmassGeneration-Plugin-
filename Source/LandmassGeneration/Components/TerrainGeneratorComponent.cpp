@@ -5,6 +5,9 @@
 #include "LandmassGeneration/DebugMacros.h"
 #include <DynamicMesh/MeshNormals.h>
 #include "TerrainChunkComponent.h"
+#include <LandmassGeneration/MeshOperation/MeshOperation.h>
+#include <LandmassGeneration/MeshOperation/MeshCreationOperation.h>
+#include <LandmassGeneration/MeshOperation/MeshEditOperation.h>
 
 using namespace UE::Geometry;
 
@@ -33,11 +36,23 @@ void UTerrainGeneratorComponent::GenerateTerrain(const FTerrainGenerationParams&
         CurrentGenerationRequestId = INDEX_NONE;
     }
 
+    TSharedPtr<FMeshOperation> MeshOperation;
+
+    if (bIsEdit)
+    {
+		MeshOperation = MakeShared<FMeshEditOperation>();
+	}
+    else
+    {
+        MeshOperation = MakeShared<FMeshCreationOperation>();
+    }
+
     // Request terrain generation
     CurrentGenerationRequestId = ShaderSubsystem->RequestTerrainGeneration(
         ChunkInfos,
 		ChunkSize,
 		ChunksX * ChunksY * ChunksZ,
+        MeshOperation,
         [this]()
         {
             OnComputeShaderComplete();

@@ -34,6 +34,7 @@ void ALandmass::OnConstruction(const FTransform& Transform)
     {
         TerrainGeneratorComponent->MaxTriangleCount = MaxTriangles;
         TerrainGeneratorComponent->bEnableDebugVisualization = bEnableDebugVisualization;
+		TerrainGeneratorComponent->bIsEdit = bIsEdit;
     }
 }
 

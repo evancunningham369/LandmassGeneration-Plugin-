@@ -43,6 +43,8 @@ public:
     /** Called when compute shader completes */
     void OnComputeShaderComplete();
 
+	bool bIsEdit = false;
+
     /** The maximum number of triangles to generate */
     UPROPERTY(EditAnywhere, Category = "Terrain Generation")
     int32 MaxTriangleCount = 500000;

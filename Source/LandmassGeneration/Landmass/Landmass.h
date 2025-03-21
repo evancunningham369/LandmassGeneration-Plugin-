@@ -50,6 +50,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
     bool bEnableDebugVisualization = false;
 
+    UPROPERTY(EditAnywhere, Category = "Terrain Generation")
+    bool bIsEdit = false;
+
     // Regenerate terrain
     UFUNCTION(BlueprintCallable, Category = "Terrain Generation")
     void RegenerateTerrain();

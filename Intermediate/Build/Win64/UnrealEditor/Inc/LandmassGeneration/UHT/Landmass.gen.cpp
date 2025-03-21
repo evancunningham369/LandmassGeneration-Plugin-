@@ -196,6 +196,10 @@ struct Z_Construct_UClass_ALandmass_Statics
 		{ "ToolTip", "Debug visualization" },
 #endif
 	};
+	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_bIsEdit_MetaData[] = {
+		{ "Category", "Terrain Generation" },
+		{ "ModuleRelativePath", "Landmass/Landmass.h" },
+	};
 #endif // WITH_METADATA
 	static const UECodeGen_Private::FBytePropertyParams NewProp_TerrainQuality_Underlying;
 	static const UECodeGen_Private::FEnumPropertyParams NewProp_TerrainQuality;
@@ -205,6 +209,8 @@ struct Z_Construct_UClass_ALandmass_Statics
 	static const UECodeGen_Private::FIntPropertyParams NewProp_MaxTriangles;
 	static void NewProp_bEnableDebugVisualization_SetBit(void* Obj);
 	static const UECodeGen_Private::FBoolPropertyParams NewProp_bEnableDebugVisualization;
+	static void NewProp_bIsEdit_SetBit(void* Obj);
+	static const UECodeGen_Private::FBoolPropertyParams NewProp_bIsEdit;
 	static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
 	static UObject* (*const DependentSingletons[])();
 	static constexpr FClassFunctionLinkInfo FuncInfo[] = {
@@ -227,6 +233,11 @@ void Z_Construct_UClass_ALandmass_Statics::NewProp_bEnableDebugVisualization_Set
 	((ALandmass*)Obj)->bEnableDebugVisualization = 1;
 }
 const UECodeGen_Private::FBoolPropertyParams Z_Construct_UClass_ALandmass_Statics::NewProp_bEnableDebugVisualization = { "bEnableDebugVisualization", nullptr, (EPropertyFlags)0x0010000000000005, UECodeGen_Private::EPropertyGenFlags::Bool | UECodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, sizeof(bool), sizeof(ALandmass), &Z_Construct_UClass_ALandmass_Statics::NewProp_bEnableDebugVisualization_SetBit, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_bEnableDebugVisualization_MetaData), NewProp_bEnableDebugVisualization_MetaData) };
+void Z_Construct_UClass_ALandmass_Statics::NewProp_bIsEdit_SetBit(void* Obj)
+{
+	((ALandmass*)Obj)->bIsEdit = 1;
+}
+const UECodeGen_Private::FBoolPropertyParams Z_Construct_UClass_ALandmass_Statics::NewProp_bIsEdit = { "bIsEdit", nullptr, (EPropertyFlags)0x0010000000000001, UECodeGen_Private::EPropertyGenFlags::Bool | UECodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, sizeof(bool), sizeof(ALandmass), &Z_Construct_UClass_ALandmass_Statics::NewProp_bIsEdit_SetBit, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_bIsEdit_MetaData), NewProp_bIsEdit_MetaData) };
 const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UClass_ALandmass_Statics::PropPointers[] = {
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ALandmass_Statics::NewProp_TerrainQuality_Underlying,
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ALandmass_Statics::NewProp_TerrainQuality,
@@ -235,6 +246,7 @@ const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UClass_ALandmass
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ALandmass_Statics::NewProp_CustomTerrainDepth,
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ALandmass_Statics::NewProp_MaxTriangles,
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ALandmass_Statics::NewProp_bEnableDebugVisualization,
+	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ALandmass_Statics::NewProp_bIsEdit,
 };
 static_assert(UE_ARRAY_COUNT(Z_Construct_UClass_ALandmass_Statics::PropPointers) < 2048);
 UObject* (*const Z_Construct_UClass_ALandmass_Statics::DependentSingletons[])() = {
@@ -280,10 +292,10 @@ struct Z_CompiledInDeferFile_FID_Users_donut_Documents_LandmassGenerationUnreal_
 		{ ETerrainQuality_StaticEnum, TEXT("ETerrainQuality"), &Z_Registration_Info_UEnum_ETerrainQuality, CONSTRUCT_RELOAD_VERSION_INFO(FEnumReloadVersionInfo, 2861608630U) },
 	};
 	static constexpr FClassRegisterCompiledInInfo ClassInfo[] = {
-		{ Z_Construct_UClass_ALandmass, ALandmass::StaticClass, TEXT("ALandmass"), &Z_Registration_Info_UClass_ALandmass, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(ALandmass), 2004791180U) },
+		{ Z_Construct_UClass_ALandmass, ALandmass::StaticClass, TEXT("ALandmass"), &Z_Registration_Info_UClass_ALandmass, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(ALandmass), 3073987601U) },
 	};
 };
-static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_Users_donut_Documents_LandmassGenerationUnreal_LandmassGeneration_Source_LandmassGeneration_Landmass_Landmass_h_1206018609(TEXT("/Script/LandmassGeneration"),
+static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_Users_donut_Documents_LandmassGenerationUnreal_LandmassGeneration_Source_LandmassGeneration_Landmass_Landmass_h_4203136223(TEXT("/Script/LandmassGeneration"),
 	Z_CompiledInDeferFile_FID_Users_donut_Documents_LandmassGenerationUnreal_LandmassGeneration_Source_LandmassGeneration_Landmass_Landmass_h_Statics::ClassInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_Users_donut_Documents_LandmassGenerationUnreal_LandmassGeneration_Source_LandmassGeneration_Landmass_Landmass_h_Statics::ClassInfo),
 	nullptr, 0,
 	Z_CompiledInDeferFile_FID_Users_donut_Documents_LandmassGenerationUnreal_LandmassGeneration_Source_LandmassGeneration_Landmass_Landmass_h_Statics::EnumInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_Users_donut_Documents_LandmassGenerationUnreal_LandmassGeneration_Source_LandmassGeneration_Landmass_Landmass_h_Statics::EnumInfo));
