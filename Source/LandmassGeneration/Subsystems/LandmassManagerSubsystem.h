@@ -55,6 +55,13 @@ private:
 		FRDGBuilder& GraphBuilder, 
 		FRDGTextureUAVRef& DensityUAV);
 
+	void AddEditDensityCubesShaderPass(
+		const uint32& ChunkSize,
+		const FIntVector& ChunkCoords,
+		UWorld* World,
+		FRDGBuilder& GraphBuilder,
+		FRDGTextureUAVRef& DensityUAV);
+
 	FRDGBufferRef CreateEmptyBuffer(FRDGBuilder& GraphBuilder, const uint32& SizeOfElement, const uint32& NumOfElements);
 	FRDGTextureRef CreateTextureBuffer(FRDGBuilder& GraphBuilder, const uint32& ChunkSize, const TCHAR* DebugName);
 };

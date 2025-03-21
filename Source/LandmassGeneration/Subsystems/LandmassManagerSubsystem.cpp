@@ -24,7 +24,7 @@ int32 ULandmassManagerSubsystem::RequestTerrainGeneration(
 	TSharedPtr<int32> ProcessedChunks = MakeShared<int32>(0);
 
 	// Total cubes * number of triangles per cube
-	const uint32 NumTrianglesPerChunk = (ChunkSize - 1) * (ChunkSize - 1) * 2; // You should calculate this based on your needs
+	const uint32 NumTrianglesPerChunk = (ChunkSize - 1) * (ChunkSize - 1) * (ChunkSize - 1) * 5; // You should calculate this based on your needs
 
 	UE_LOG(LogTemp, Warning, TEXT("Total Chunks: %d\n Triangles Per Chunk: %d"), TotalChunks, NumTrianglesPerChunk);
 	ENQUEUE_RENDER_COMMAND(TerrainGenerationCommand)(
@@ -198,9 +198,9 @@ void ULandmassManagerSubsystem::ProcessShaderReadback(
 				//ChunkData->Triangles.Add(TriangleData[i]);
 				
 				// print out the triangle vertices
-				UE_LOG(LogTemp, Warning, TEXT("Triangle %d: %s"), i, *TriangleData[i].Vertex1.ToString());
+				/*UE_LOG(LogTemp, Warning, TEXT("Triangle %d: %s"), i, *TriangleData[i].Vertex1.ToString());
 				UE_LOG(LogTemp, Warning, TEXT("Triangle %d: %s"), i, *TriangleData[i].Vertex2.ToString());
-				UE_LOG(LogTemp, Warning, TEXT("Triangle %d: %s"), i, *TriangleData[i].Vertex3.ToString());
+				UE_LOG(LogTemp, Warning, TEXT("Triangle %d: %s"), i, *TriangleData[i].Vertex3.ToString());*/
 				AsyncTask(ENamedThreads::GameThread, [this, TriangleData, i]()
 					{
 						DRAW_POINT_PERM((FVector)TriangleData[i].Vertex1 * 100, FColor::Red);
@@ -288,6 +288,40 @@ void ULandmassManagerSubsystem::AddDensityCubesShaderPass(
 		DensityShader,
 		DensityParams,
 		DensityThreadGroups
+	);
+}
+
+void ULandmassManagerSubsystem::AddEditDensityCubesShaderPass(const uint32& ChunkSize, const FIntVector& ChunkCoords, UWorld* World, FRDGBuilder& GraphBuilder, FRDGTextureUAVRef& DensityUAV)
+{
+	TShaderMapRef<FEditDensityComputeShader> EditDensityShader(GetGlobalShaderMap(GMaxRHIFeatureLevel));
+	uint32 TotalVertices = ChunkSize * ChunkSize * ChunkSize;
+	// Use RDG for GPU resource management
+	// Create GPU Buffer
+	FRDGTextureRef DensityBuffer = CreateTextureBuffer(
+		GraphBuilder,
+		ChunkSize,
+		TEXT("Density Data Buffer")
+	);
+	// Create an UAV Buffer to enable RW on GPU Buffer
+	DensityUAV = GraphBuilder.CreateUAV(FRDGTextureUAVDesc(DensityBuffer));
+	// Allocate parameters
+	FEditDensityComputeShader::FParameters* EditDensityParams = GraphBuilder.AllocParameters<FEditDensityComputeShader::FParameters>();
+	EditDensityParams->DensityMap = DensityUAV;
+
+	// Number of Thread Groups
+	const uint32 ThreadGroupSize = 8;
+
+	FIntVector EditDensityThreadGroups(
+		FMath::DivideAndRoundUp(ChunkSize, ThreadGroupSize),
+		FMath::DivideAndRoundUp(ChunkSize, ThreadGroupSize),
+		FMath::DivideAndRoundUp(ChunkSize, ThreadGroupSize));
+
+	FComputeShaderUtils::AddPass(
+		GraphBuilder,
+		RDG_EVENT_NAME("Edit Density Shader Pass"),
+		EditDensityShader,
+		EditDensityParams,
+		EditDensityThreadGroups
 	);
 }
 

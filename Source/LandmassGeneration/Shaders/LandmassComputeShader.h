@@ -25,6 +25,29 @@ public:
     END_SHADER_PARAMETER_STRUCT()
 };
 
+class FEditDensityComputeShader : public FGlobalShader
+{
+    DECLARE_GLOBAL_SHADER(FEditDensityComputeShader);
+    SHADER_USE_PARAMETER_STRUCT(FEditDensityComputeShader, FGlobalShader)
+
+public:
+
+    static bool ShouldCompilePermutation(const FGlobalShaderPermutationParameters& Parameters)
+    {
+        return IsFeatureLevelSupported(Parameters.Platform, ERHIFeatureLevel::SM5);
+    }
+
+    static void ModifyCompilationEnvironment(const FGlobalShaderPermutationParameters& Parameters, FShaderCompilerEnvironment& OutEnvironment)
+    {
+        FGlobalShader::ModifyCompilationEnvironment(Parameters, OutEnvironment);
+        OutEnvironment.SetDefine(TEXT("COMPUTE_SHADER"), 1);
+    }
+
+    BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
+        SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture3D<float>, DensityMap)
+    END_SHADER_PARAMETER_STRUCT()
+};
+
 class FMarchingCubesShader : public FGlobalShader
 {
     DECLARE_GLOBAL_SHADER(FMarchingCubesShader);

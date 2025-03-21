@@ -27,9 +27,33 @@ float3 GetInterpolatedVertex(float3 VertA, float3 VertB, float ValueA, float Val
 
 //Number of vertices
 [numthreads(8, 8, 8)]
-void FillDensity(uint3 ThreadId: SV_DispatchThreadID, uint3 GroupId : SV_GroupID)
+void CreateMesh(uint3 ThreadId: SV_DispatchThreadID, uint3 GroupId : SV_GroupID)
 {
-    if (ThreadId.z == 7)
+    int x = ThreadId.x;
+    int y = ThreadId.y;
+    int z = ThreadId.z;
+    bool IsBox = z == 0 || x == 0 || y == 0 || z == 7 || x == 7 || y == 7;
+    if (IsBox)
+    {
+        DensityMap[ThreadId] = 1.f;
+    }
+    else
+    {
+        DensityMap[ThreadId] = -1.f;
+    }
+}
+
+[numthreads(8, 8, 8)]
+void CreateCrater(uint3 ThreadId : SV_DispatchThreadID, uint3 GroupId : SV_GroupID)
+{
+    int x = ThreadId.x;
+    int y = ThreadId.y;
+    int z = ThreadId.z;
+    
+    bool IsBox = z == 0 || x == 0 || y == 0 || z == 7 || x == 7 || y == 7;
+    bool IsCrater = (x > 2 && x < 6) && (y > 2 && y < 6) && z > 2;
+    
+    if (IsBox || IsCrater)
     {
         DensityMap[ThreadId] = 1.f;
     }
