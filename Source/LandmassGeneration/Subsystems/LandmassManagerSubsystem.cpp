@@ -165,18 +165,18 @@ void ULandmassManagerSubsystem::ProcessShaderReadback(
 
 			for (uint32 i = 0; i < NumTrianglesPerChunk; i++)
 			{
-				//ChunkData->Triangles.Add(TriangleData[i]);
+				ChunkData->Triangles.Add(TriangleData[i]);
 				
 				// print out the triangle vertices
 				/*UE_LOG(LogTemp, Warning, TEXT("Triangle %d: %s"), i, *TriangleData[i].Vertex1.ToString());
 				UE_LOG(LogTemp, Warning, TEXT("Triangle %d: %s"), i, *TriangleData[i].Vertex2.ToString());
 				UE_LOG(LogTemp, Warning, TEXT("Triangle %d: %s"), i, *TriangleData[i].Vertex3.ToString());*/
-				AsyncTask(ENamedThreads::GameThread, [this, TriangleData, i]()
+				/*AsyncTask(ENamedThreads::GameThread, [this, TriangleData, i]()
 					{
 						DRAW_POINT_PERM((FVector)TriangleData[i].Vertex1 * 100, FColor::Red);
 						DRAW_POINT_PERM((FVector)TriangleData[i].Vertex2 * 100, FColor::Red);
 						DRAW_POINT_PERM((FVector)TriangleData[i].Vertex3 * 100, FColor::Red);
-					});
+					});*/
 			}
 			ChunkData->bIsProcessed = true;
 
@@ -202,7 +202,7 @@ void ULandmassManagerSubsystem::ProcessShaderReadback(
 		});
 	if (CurrentProcessed == TotalChunks)
 	{
-		/*AsyncTask(ENamedThreads::GameThread, [this, TotalChunks ,RequestId]()
+		AsyncTask(ENamedThreads::GameThread, [this, TotalChunks ,RequestId]()
 			{
 				UE_LOG(LogTemp, Warning, TEXT("Processed all %d Chunks"), TotalChunks)
 				TFunction<void()>* Callback = PendingCallbacks.Find(RequestId);
@@ -211,7 +211,7 @@ void ULandmassManagerSubsystem::ProcessShaderReadback(
 					(*Callback)();
 				}
 				PendingCallbacks.Remove(RequestId);
-			});*/
+			});
 	}
 }
 

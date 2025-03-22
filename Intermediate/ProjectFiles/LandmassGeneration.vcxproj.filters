@@ -125,6 +125,9 @@
     <ClCompile Include="..\..\Source\LandmassGeneration\MeshOperation\MeshEditOperation.h">
       <Filter>Source\LandmassGeneration\MeshOperation</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\LandmassGeneration\MeshOperation\MeshOperation.cpp">
+      <Filter>Source\LandmassGeneration\MeshOperation</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\LandmassGeneration\MeshOperation\MeshOperation.h">
       <Filter>Source\LandmassGeneration\MeshOperation</Filter>
     </ClCompile>
@@ -146,8 +149,5 @@
     <ClCompile Include="..\..\Source\LandmassGeneration\Subsystems\LandmassManagerSubsystem.h">
       <Filter>Source\LandmassGeneration\Subsystems</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\..\Source\LandmassGeneration\MeshOperation\MeshOperation.cpp" />
   </ItemGroup>
 </Project>

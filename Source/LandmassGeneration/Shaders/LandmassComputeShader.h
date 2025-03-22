@@ -1,5 +1,6 @@
+#pragma once
+
 #include "ShaderParameterStruct.h"
-#include "LandmassGeneration/LandmassStructs.h"
 
 class FDensityComputeShader : public FGlobalShader
 {

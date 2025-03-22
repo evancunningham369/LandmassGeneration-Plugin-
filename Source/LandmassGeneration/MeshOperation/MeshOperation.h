@@ -1,8 +1,7 @@
 #pragma once
-
-#include "CoreMinimal.h"
-#include "LandmassGeneration/LandmassStructs.h"
-#include "RenderGraphBuilder.h"
+#include "LandmassGeneration/Shaders/LandmassComputeShader.h"
+#include <LandmassGeneration/LandmassStructs.h>
+#include "RenderGraphUtils.h"
 
 class FMeshOperation
 {
@@ -15,7 +14,7 @@ public:
         FRDGBufferRef& TrianglesOutputBuffer,
         const FIntVector& ChunkCoords,
         uint32 ChunkSize,
-        TSharedPtr<FTerrainChunkData> ChunkData) = 0;
+        TSharedPtr<FTerrainChunkData> ChunkData);
 
 protected:
     FRDGBufferRef CreateEmptyBuffer(FRDGBuilder& GraphBuilder, const uint32& SizeOfElement, const uint32& NumOfElements)
@@ -41,4 +40,10 @@ protected:
 
         return Texture;
     };
+
+    virtual void AddDensityShaderPass(
+        const uint32& ChunkSize,
+        const FIntVector& ChunkCoords,
+        FRDGBuilder& GraphBuilder,
+        FRDGTextureUAVRef& DensityUAV) = 0;
 };

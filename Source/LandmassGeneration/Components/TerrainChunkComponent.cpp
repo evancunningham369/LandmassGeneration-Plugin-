@@ -76,7 +76,7 @@ void UTerrainChunkComponent::UpdateMesh(const TArray<FTriangle>& Triangles, uint
 		// Get the vertex position
 		FVector3d VertexPosition = Mesh.GetVertex(VertexIndex);
 		DRAW_POINT_PERM(VertexPosition, FColor::Red);
-		UE_LOG(LogTemp, Warning, TEXT("Vertex Index: %d, Vertex Position: %s"), VertexIndex ,*VertexPosition.ToString());
+		//UE_LOG(LogTemp, Warning, TEXT("Vertex Index: %d, Vertex Position: %s"), VertexIndex ,*VertexPosition.ToString());
     }
 
     // Calculate normals for proper lighting/shading
