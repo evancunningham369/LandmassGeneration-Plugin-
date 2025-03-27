@@ -28,13 +28,6 @@ template<> LANDMASSGENERATION_API UScriptStruct* StaticStruct<struct FTerrainChu
 
 template<> LANDMASSGENERATION_API UScriptStruct* StaticStruct<struct FTriangle>();
 
-#define FID_Users_donut_Documents_LandmassGenerationUnreal_LandmassGeneration_Source_LandmassGeneration_LandmassStructs_h_35_GENERATED_BODY \
-	friend struct Z_Construct_UScriptStruct_FTerrainGenerationParams_Statics; \
-	LANDMASSGENERATION_API static class UScriptStruct* StaticStruct();
-
-
-template<> LANDMASSGENERATION_API UScriptStruct* StaticStruct<struct FTerrainGenerationParams>();
-
 #undef CURRENT_FILE_ID
 #define CURRENT_FILE_ID FID_Users_donut_Documents_LandmassGenerationUnreal_LandmassGeneration_Source_LandmassGeneration_LandmassStructs_h
 

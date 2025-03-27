@@ -15,13 +15,11 @@ UTerrainGeneratorComponent::UTerrainGeneratorComponent()
 {
 }
 
-void UTerrainGeneratorComponent::GenerateTerrain(const FTerrainGenerationParams& Params)
+void UTerrainGeneratorComponent::GenerateTerrain()
 {
-    // Store the parameters
-    TerrainParams = Params;
 
     // Create the chunks
-    CreateChunks(TerrainParams);
+    CreateChunks();
 
     // Get the subsystem
     if (!ShaderSubsystem)
@@ -38,14 +36,7 @@ void UTerrainGeneratorComponent::GenerateTerrain(const FTerrainGenerationParams&
 
     TSharedPtr<FMeshOperation> MeshOperation;
 
-    if (bIsEdit)
-    {
-		MeshOperation = MakeShared<FMeshEditOperation>();
-	}
-    else
-    {
-        MeshOperation = MakeShared<FMeshCreationOperation>();
-    }
+     MeshOperation = MakeShared<FMeshCreationOperation>();
 
     // Request terrain generation
     CurrentGenerationRequestId = ShaderSubsystem->RequestTerrainGeneration(
@@ -62,7 +53,39 @@ void UTerrainGeneratorComponent::GenerateTerrain(const FTerrainGenerationParams&
     //ShaderSubsystem->TestShader(ChunkInfos, ChunkSize);
 }
 
-void UTerrainGeneratorComponent::CreateChunks(const FTerrainGenerationParams& Params)
+void UTerrainGeneratorComponent::UpdateTerrain(UTerrainChunkComponent& ChunkComponent)
+{
+	if (!ShaderSubsystem)
+	{
+		ShaderSubsystem = GetWorld()->GetSubsystem<ULandmassManagerSubsystem>();
+	}
+
+	TSharedPtr<FMeshOperation> MeshOperation;
+
+	MeshOperation = MakeShared<FMeshEditOperation>();
+
+	ShaderSubsystem->RequestTerrainModification(
+		ChunkComponent,
+		MeshOperation,
+		[this, &ChunkComponent]()
+		{
+			OnEditComputeShaderComplete(ChunkComponent);
+		}
+	);
+}
+
+void UTerrainGeneratorComponent::OnEditComputeShaderComplete(UTerrainChunkComponent& TerrainChunk)
+{
+    UE_LOG(LogTemp, Warning, TEXT("Edit Shader Completed!"));
+    UE_LOG(LogTemp, Warning, TEXT("Triangle Count: %d"), TerrainChunk.GetChunkData()->TriangleCount);
+	FTerrainChunkDataPtr ChunkData = TerrainChunk.GetChunkData();
+
+    TerrainChunk.EditChunkMesh(
+    ChunkData->Triangles,
+    ChunkData->TriangleCount);
+}
+
+void UTerrainGeneratorComponent::CreateChunks()
 {
     // Clear existing chunks
     for (FTerrainChunkInfo& ChunkInfo : ChunkInfos)
@@ -73,7 +96,6 @@ void UTerrainGeneratorComponent::CreateChunks(const FTerrainGenerationParams& Pa
         }
     }
     ChunkInfos.Empty();
-    ChunkDataMap.Empty();
     
     // Calculate how many chunks we need in each dimension
 
@@ -91,7 +113,6 @@ void UTerrainGeneratorComponent::CreateChunks(const FTerrainGenerationParams& Pa
                 FIntVector ChunkCoords(X, Y, Z);
                 
 				TSharedPtr<FTerrainChunkData> ChunkData = MakeShared<FTerrainChunkData>();
-				ChunkDataMap.Add(ChunkCoords, ChunkData);
 
                 // Create a component for this chunk
                 FString ChunkName = FString::Printf(TEXT("Chunk_%d_%d_%d"), X, Y, Z);

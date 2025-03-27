@@ -7,17 +7,6 @@
 #include <LandmassGeneration/LandmassStructs.h>
 #include "Landmass.generated.h"
 
-
-UENUM(BlueprintType)
-enum class ETerrainQuality : uint8
-{
-    Low UMETA(DisplayName = "Low"),
-    Medium UMETA(DisplayName = "Medium"),
-    High UMETA(DisplayName = "High"),
-    Ultra UMETA(DisplayName = "Ultra"),
-    Custom UMETA(DisplayName = "Custom")
-};
-
 UCLASS()
 class LANDMASSGENERATION_API ALandmass : public AActor
 {
@@ -25,22 +14,7 @@ class LANDMASSGENERATION_API ALandmass : public AActor
 	
 public:
     ALandmass();
-
     class UTerrainGeneratorComponent* TerrainGeneratorComponent;
-
-    // Quality presets
-    UPROPERTY(EditAnywhere, Category = "Terrain Generation")
-    ETerrainQuality TerrainQuality = ETerrainQuality::Low;
-
-    // Custom terrain settings (only used when TerrainQuality = Custom)
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain Generation", meta = (EditCondition = "TerrainQuality == ETerrainQuality::Custom", ClampMin = "8", ClampMax = "512"))
-    int32 CustomTerrainWidth = 16;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain Generation", meta = (EditCondition = "TerrainQuality == ETerrainQuality::Custom", ClampMin = "8", ClampMax = "512"))
-    int32 CustomTerrainHeight = 2;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain Generation", meta = (EditCondition = "TerrainQuality == ETerrainQuality::Custom", ClampMin = "8", ClampMax = "512"))
-    int32 CustomTerrainDepth = 16;
 
     // Maximum number of triangles to generate
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain Generation", meta = (ClampMin = "10000", ClampMax = "5000000"))
@@ -60,8 +34,5 @@ public:
 protected:
     virtual void BeginPlay() override;
     virtual void OnConstruction(const FTransform& Transform) override;
-
-private:
-    FTerrainGenerationParams BuildTerrainParams() const;
 
 };

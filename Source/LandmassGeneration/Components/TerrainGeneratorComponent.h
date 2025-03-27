@@ -38,10 +38,14 @@ public:
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
     /** Generate terrain with the given parameters */
-    void GenerateTerrain(const FTerrainGenerationParams& Params);
+    void GenerateTerrain();
+
+    void UpdateTerrain(UTerrainChunkComponent& ChunkComponent);
 
     /** Called when compute shader completes */
     void OnComputeShaderComplete();
+
+	void OnEditComputeShaderComplete(UTerrainChunkComponent& TerrainChunk);
 
 	bool bIsEdit = false;
 
@@ -61,16 +65,10 @@ public:
 
 private:
     /** Create chunks based on terrain parameters */
-    void CreateChunks(const FTerrainGenerationParams& Params);
+    void CreateChunks();
 
     /** Calculate which chunk a point belongs to */
     FIntVector GetChunkCoordsForPoint(const FVector& Point) const;
-
-    FTerrainGenerationParams TerrainParams;
-
-	// Map of chunk coordinates to triangle data
-    TMap<FIntVector, TSharedPtr<FTerrainChunkData>> ChunkDataMap;
-
 
     UPROPERTY()
     TArray<FTerrainChunkInfo> ChunkInfos;

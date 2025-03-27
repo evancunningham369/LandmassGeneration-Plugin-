@@ -12,7 +12,6 @@ void EmptyLinkFunctionForGeneratedCodeLandmassStructs() {}
 // Begin Cross Module References
 COREUOBJECT_API UScriptStruct* Z_Construct_UScriptStruct_FVector3f();
 LANDMASSGENERATION_API UScriptStruct* Z_Construct_UScriptStruct_FTerrainChunkData();
-LANDMASSGENERATION_API UScriptStruct* Z_Construct_UScriptStruct_FTerrainGenerationParams();
 LANDMASSGENERATION_API UScriptStruct* Z_Construct_UScriptStruct_FTriangle();
 UPackage* Z_Construct_UPackage__Script_LandmassGeneration();
 // End Cross Module References
@@ -139,66 +138,15 @@ UScriptStruct* Z_Construct_UScriptStruct_FTriangle()
 }
 // End ScriptStruct FTriangle
 
-// Begin ScriptStruct FTerrainGenerationParams
-static FStructRegistrationInfo Z_Registration_Info_UScriptStruct_TerrainGenerationParams;
-class UScriptStruct* FTerrainGenerationParams::StaticStruct()
-{
-	if (!Z_Registration_Info_UScriptStruct_TerrainGenerationParams.OuterSingleton)
-	{
-		Z_Registration_Info_UScriptStruct_TerrainGenerationParams.OuterSingleton = GetStaticStruct(Z_Construct_UScriptStruct_FTerrainGenerationParams, (UObject*)Z_Construct_UPackage__Script_LandmassGeneration(), TEXT("TerrainGenerationParams"));
-	}
-	return Z_Registration_Info_UScriptStruct_TerrainGenerationParams.OuterSingleton;
-}
-template<> LANDMASSGENERATION_API UScriptStruct* StaticStruct<FTerrainGenerationParams>()
-{
-	return FTerrainGenerationParams::StaticStruct();
-}
-struct Z_Construct_UScriptStruct_FTerrainGenerationParams_Statics
-{
-#if WITH_METADATA
-	static constexpr UECodeGen_Private::FMetaDataPairParam Struct_MetaDataParams[] = {
-		{ "ModuleRelativePath", "LandmassStructs.h" },
-	};
-#endif // WITH_METADATA
-	static void* NewStructOps()
-	{
-		return (UScriptStruct::ICppStructOps*)new UScriptStruct::TCppStructOps<FTerrainGenerationParams>();
-	}
-	static const UECodeGen_Private::FStructParams StructParams;
-};
-const UECodeGen_Private::FStructParams Z_Construct_UScriptStruct_FTerrainGenerationParams_Statics::StructParams = {
-	(UObject* (*)())Z_Construct_UPackage__Script_LandmassGeneration,
-	nullptr,
-	&NewStructOps,
-	"TerrainGenerationParams",
-	nullptr,
-	0,
-	sizeof(FTerrainGenerationParams),
-	alignof(FTerrainGenerationParams),
-	RF_Public|RF_Transient|RF_MarkAsNative,
-	EStructFlags(0x00000001),
-	METADATA_PARAMS(UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FTerrainGenerationParams_Statics::Struct_MetaDataParams), Z_Construct_UScriptStruct_FTerrainGenerationParams_Statics::Struct_MetaDataParams)
-};
-UScriptStruct* Z_Construct_UScriptStruct_FTerrainGenerationParams()
-{
-	if (!Z_Registration_Info_UScriptStruct_TerrainGenerationParams.InnerSingleton)
-	{
-		UECodeGen_Private::ConstructUScriptStruct(Z_Registration_Info_UScriptStruct_TerrainGenerationParams.InnerSingleton, Z_Construct_UScriptStruct_FTerrainGenerationParams_Statics::StructParams);
-	}
-	return Z_Registration_Info_UScriptStruct_TerrainGenerationParams.InnerSingleton;
-}
-// End ScriptStruct FTerrainGenerationParams
-
 // Begin Registration
 struct Z_CompiledInDeferFile_FID_Users_donut_Documents_LandmassGenerationUnreal_LandmassGeneration_Source_LandmassGeneration_LandmassStructs_h_Statics
 {
 	static constexpr FStructRegisterCompiledInInfo ScriptStructInfo[] = {
 		{ FTerrainChunkData::StaticStruct, Z_Construct_UScriptStruct_FTerrainChunkData_Statics::NewStructOps, TEXT("TerrainChunkData"), &Z_Registration_Info_UScriptStruct_TerrainChunkData, CONSTRUCT_RELOAD_VERSION_INFO(FStructReloadVersionInfo, sizeof(FTerrainChunkData), 2815730896U) },
 		{ FTriangle::StaticStruct, Z_Construct_UScriptStruct_FTriangle_Statics::NewStructOps, TEXT("Triangle"), &Z_Registration_Info_UScriptStruct_Triangle, CONSTRUCT_RELOAD_VERSION_INFO(FStructReloadVersionInfo, sizeof(FTriangle), 2262215305U) },
-		{ FTerrainGenerationParams::StaticStruct, Z_Construct_UScriptStruct_FTerrainGenerationParams_Statics::NewStructOps, TEXT("TerrainGenerationParams"), &Z_Registration_Info_UScriptStruct_TerrainGenerationParams, CONSTRUCT_RELOAD_VERSION_INFO(FStructReloadVersionInfo, sizeof(FTerrainGenerationParams), 3525034907U) },
 	};
 };
-static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_Users_donut_Documents_LandmassGenerationUnreal_LandmassGeneration_Source_LandmassGeneration_LandmassStructs_h_2687463653(TEXT("/Script/LandmassGeneration"),
+static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_Users_donut_Documents_LandmassGenerationUnreal_LandmassGeneration_Source_LandmassGeneration_LandmassStructs_h_2460359807(TEXT("/Script/LandmassGeneration"),
 	nullptr, 0,
 	Z_CompiledInDeferFile_FID_Users_donut_Documents_LandmassGenerationUnreal_LandmassGeneration_Source_LandmassGeneration_LandmassStructs_h_Statics::ScriptStructInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_Users_donut_Documents_LandmassGenerationUnreal_LandmassGeneration_Source_LandmassGeneration_LandmassStructs_h_Statics::ScriptStructInfo),
 	nullptr, 0);

@@ -6,6 +6,7 @@
 #include "Subsystems/WorldSubsystem.h"
 #include <LandmassGeneration/LandmassStructs.h>
 #include <LandmassGeneration/Components/TerrainGeneratorComponent.h>
+#include <LandmassGeneration/Components/TerrainChunkComponent.h>
 #include "LandmassManagerSubsystem.generated.h"
 
 /**
@@ -26,6 +27,11 @@ public:
 		TSharedPtr<class FMeshOperation> MeshOperation,
 		TFunction<void()> Callback);
 
+	int32 RequestTerrainModification(
+		const UTerrainChunkComponent& ChunkComponent,
+		TSharedPtr<class FMeshOperation> MeshOperation,
+		TFunction<void()> Callback);
+
 	void TestShader(const TArray<FTerrainChunkInfo>& ChunkInfos, uint32 ChunkSize);
 
 	void CancelRequest(int32 RequestId);
@@ -35,6 +41,7 @@ private:
 	TMap<TSharedPtr<FRHIGPUBufferReadback>, TSharedPtr<FTerrainChunkData>> TriangleReadbackBuffers;
 	TArray<TSharedPtr<FRHIGPUBufferReadback>> ReadbackBuffers;
 	int32 TestNumElementsPerChunk;
+
 	void ProcessShaderReadback(
 		TSharedPtr<FRHIGPUBufferReadback> ReadbackBuffer,
 		TSharedPtr<FTerrainChunkData> ChunkData,
@@ -43,6 +50,12 @@ private:
 		int32 RequestId,
 		uint32 ElementSize,
 		uint32 NumTrianglesPerChunk);
+
+	void ProcessEditShaderReadback(
+		TSharedPtr<FRHIGPUBufferReadback> ReadbackBuffer,
+		const UTerrainChunkComponent& ChunkComponent,
+		uint32 NumTrianglesPerChunk,
+		int32 RequestId);
 
 	TMap<int32, TFunction<void()>> PendingCallbacks;
 

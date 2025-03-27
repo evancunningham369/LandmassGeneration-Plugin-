@@ -29,14 +29,3 @@ struct FTriangle
     FVector3f Vertex3;
 };
 
-USTRUCT()
-struct FTerrainGenerationParams
-{
-    GENERATED_BODY()
-
-    uint32 Width;
-    uint32 Height;
-    uint32 Depth;
-    uint32 NumVertices;
-};
-

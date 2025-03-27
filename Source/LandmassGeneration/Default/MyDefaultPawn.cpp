@@ -8,6 +8,7 @@
 #include "LandmassGeneration/Landmass/Landmass.h"
 #include "LandmassGeneration/DebugMacros.h"
 #include <LandmassGeneration/Components/TerrainGeneratorComponent.h>
+#include <LandmassGeneration/Components/TerrainChunkComponent.h>
 
 #define LANDMASS_CHANNEL ECC_GameTraceChannel1
 
@@ -82,9 +83,18 @@ void AMyDefaultPawn::TraceUnderCrosshairs()
 
 		if (HitResult.bBlockingHit)
 		{
-			CalculateHit(HitResult);
+			//CalculateHit(HitResult);
 			DRAW_SPHERE(HitResult.ImpactPoint, FColor::Black);
 			DRAW_LINE(Start, HitResult.ImpactPoint);
+			if (UTerrainChunkComponent* TerrainChunk = Cast<UTerrainChunkComponent>(HitResult.GetComponent()))
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Terrain Chunk Found!"));
+				if (UTerrainGeneratorComponent* TerrainGeneratorComponent = Cast<UTerrainGeneratorComponent>(TerrainChunk->GetAttachParent()))
+				{
+					UE_LOG(LogTemp, Warning, TEXT("Terrain Generator Component Found!"));
+					TerrainGeneratorComponent->UpdateTerrain(*TerrainChunk);
+				}
+			}
 		}
 		else
 		{

@@ -42,52 +42,7 @@ void ALandmass::RegenerateTerrain()
 {
     if (TerrainGeneratorComponent)
     {
-        FTerrainGenerationParams Params = BuildTerrainParams();
-        TerrainGeneratorComponent->GenerateTerrain(Params);
+        TerrainGeneratorComponent->GenerateTerrain();
     }
-}
-
-FTerrainGenerationParams ALandmass::BuildTerrainParams() const
-{
-    FTerrainGenerationParams Params;
-
-    // Set the parameters based on the quality preset
-    switch (TerrainQuality)
-    {
-    case ETerrainQuality::Low:
-        Params.Width = 32;
-        Params.Height = 2;
-        Params.Depth = 32;
-        break;
-
-    case ETerrainQuality::Medium:
-        Params.Width = 64;
-        Params.Height = 2;
-        Params.Depth = 64;
-        break;
-
-    case ETerrainQuality::High:
-        Params.Width = 128;
-        Params.Height = 2;
-        Params.Depth = 128;
-        break;
-
-    case ETerrainQuality::Ultra:
-        Params.Width = 256;
-        Params.Height = 256;
-        Params.Depth = 256;
-        break;
-
-    case ETerrainQuality::Custom:
-        Params.Width = CustomTerrainWidth;
-        Params.Height = CustomTerrainHeight;
-        Params.Depth = CustomTerrainDepth;
-        break;
-    }
-
-    // Calculate the total number of vertices
-    Params.NumVertices = Params.Width * Params.Height * Params.Depth;
-
-    return Params;
 }
 

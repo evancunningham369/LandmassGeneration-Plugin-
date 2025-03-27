@@ -46,6 +46,8 @@ public:
 
     BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
         SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture3D<float>, DensityMap)
+        SHADER_PARAMETER(FVector3f, DestructionCenter)
+		SHADER_PARAMETER(float, DestructionRadius)
     END_SHADER_PARAMETER_STRUCT()
 };
 

@@ -16,6 +16,8 @@ void FMeshEditOperation::AddDensityShaderPass(const uint32& ChunkSize, const FIn
 	// Allocate parameters
 	FEditDensityComputeShader::FParameters* EditDensityParams = GraphBuilder.AllocParameters<FEditDensityComputeShader::FParameters>();
 	EditDensityParams->DensityMap = DensityUAV;
+	EditDensityParams->DestructionCenter = FVector3f(0, ChunkSize, ChunkSize / 2);
+	EditDensityParams->DestructionRadius = 3;
 
 	// Number of Thread Groups
 	const uint32 ThreadGroupSize = 8;

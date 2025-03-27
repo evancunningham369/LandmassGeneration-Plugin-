@@ -1,6 +1,11 @@
 #include "MeshOperation.h"
 
-void FMeshOperation::Execute(FRDGBuilder& GraphBuilder, FRDGBufferRef& TrianglesOutputBuffer, const FIntVector& ChunkCoords, uint32 ChunkSize, TSharedPtr<FTerrainChunkData> ChunkData)
+void FMeshOperation::Execute(
+    FRDGBuilder& GraphBuilder, 
+    FRDGBufferRef& TrianglesOutputBuffer, 
+    const FIntVector& ChunkCoords, 
+    uint32 ChunkSize, 
+    TSharedPtr<FTerrainChunkData> ChunkData)
 {
     uint32 NumTrianglesPerChunk = ChunkData->TriangleCount;
 
