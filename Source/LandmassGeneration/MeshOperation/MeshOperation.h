@@ -12,6 +12,7 @@ public:
     virtual void Execute(
         FRDGBuilder& GraphBuilder,
         FRDGBufferRef& TrianglesOutputBuffer,
+        FRDGBufferRef& CounterOutputBuffer,
         const FIntVector& ChunkCoords,
         uint32 ChunkSize,
         TSharedPtr<FTerrainChunkData> ChunkData);

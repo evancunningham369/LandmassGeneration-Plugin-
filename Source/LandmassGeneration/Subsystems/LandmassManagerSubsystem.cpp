@@ -42,8 +42,9 @@ int32 ULandmassManagerSubsystem::RequestTerrainGeneration(
 				FIntVector ChunkCoords = (FIntVector)ChunkInfo.ChunkComponent->GetComponentLocation();
 				ChunkInfo.ChunkData->TriangleCount = NumTrianglesPerChunk;
 				FRDGBufferRef TrianglesOutputBuffer;
+				FRDGBufferRef CounterOutputBuffer;
 
-				MeshOperation->Execute(GraphBuilder, TrianglesOutputBuffer ,ChunkCoords, ChunkSize, ChunkInfo.ChunkData);
+				MeshOperation->Execute(GraphBuilder, TrianglesOutputBuffer, CounterOutputBuffer, ChunkCoords, ChunkSize, ChunkInfo.ChunkData);
 
 				// Setup readback
 				TSharedPtr<FRHIGPUBufferReadback> TriangleReadbackBuffer = MakeShared<FRHIGPUBufferReadback>(TEXT("Triangle Compute Readback"));
@@ -73,40 +74,6 @@ int32 ULandmassManagerSubsystem::RequestTerrainGeneration(
 
 		});
 		
-	return RequestId;
-}
-
-int32 ULandmassManagerSubsystem::RequestTerrainModification(
-	const UTerrainChunkComponent& ChunkComponent, 
-	TSharedPtr<class FMeshOperation> MeshOperation,
-	TFunction<void()> Callback)
-{
-
-	int32 RequestId = NextRequestId++;
-	PendingCallbacks.Add(RequestId, Callback);
-
-	const uint32 NumTriangles = (7) * (7) * (7) * 5;
-	ENQUEUE_RENDER_COMMAND(TerrainModificationCommand)(
-		[this, RequestId ,&ChunkComponent, MeshOperation, Callback](FRHICommandListImmediate& RHICmdList)
-		{
-			FRDGBuilder GraphBuilder(RHICmdList);
-			FIntVector ChunkCoords = ChunkComponent.GetChunkCoords();
-			FRDGBufferRef TrianglesOutputBuffer;
-			MeshOperation->Execute(GraphBuilder, TrianglesOutputBuffer, ChunkCoords, 8, ChunkComponent.GetChunkData());
-			// Setup readback
-			TSharedPtr<FRHIGPUBufferReadback> TriangleReadbackBuffer = MakeShared<FRHIGPUBufferReadback>(TEXT("Triangle Compute Readback"));
-			AddEnqueueCopyPass(GraphBuilder, TriangleReadbackBuffer.Get(), TrianglesOutputBuffer, sizeof(FTriangle) * NumTriangles);
-			
-			GraphBuilder.Execute();
-			// Loop through TriangleReadback Buffers Map
-			
-			ProcessEditShaderReadback(
-				TriangleReadbackBuffer,
-				ChunkComponent,
-				NumTriangles,
-				RequestId);
-			
-		});
 	return RequestId;
 }
 
@@ -247,19 +214,69 @@ void ULandmassManagerSubsystem::ProcessShaderReadback(
 	}
 }
 
-void ULandmassManagerSubsystem::ProcessEditShaderReadback(TSharedPtr<FRHIGPUBufferReadback> ReadbackBuffer, const UTerrainChunkComponent& ChunkComponent, uint32 NumTrianglesPerChunk, int32 RequestId)
+int32 ULandmassManagerSubsystem::RequestTerrainModification(
+	UTerrainChunkComponent& ChunkComponent,
+	TSharedPtr<class FMeshOperation> MeshOperation,
+	TFunction<void()> Callback)
+{
+
+	int32 RequestId = NextRequestId++;
+	PendingCallbacks.Add(RequestId, Callback);
+
+	const uint32 NumTriangles = (7) * (7) * (7) * 5;
+	ENQUEUE_RENDER_COMMAND(TerrainModificationCommand)(
+		[this, RequestId, &ChunkComponent, MeshOperation, Callback](FRHICommandListImmediate& RHICmdList)
+		{
+			FRDGBuilder GraphBuilder(RHICmdList);
+			FIntVector ChunkCoords = ChunkComponent.GetChunkCoords();
+			FRDGBufferRef TrianglesOutputBuffer;
+			FRDGBufferRef CounterOutputBuffer;
+
+			MeshOperation->Execute(GraphBuilder, TrianglesOutputBuffer, CounterOutputBuffer ,ChunkCoords, 8, ChunkComponent.GetChunkData());
+			// Setup readback
+			TSharedPtr<FRHIGPUBufferReadback> TriangleReadbackBuffer = MakeShared<FRHIGPUBufferReadback>(TEXT("Triangle Compute Readback"));
+			TSharedPtr<FRHIGPUBufferReadback> CounterReadbackBuffer = MakeShared<FRHIGPUBufferReadback>(TEXT("Triangle Compute Readback"));
+			AddEnqueueCopyPass(GraphBuilder, TriangleReadbackBuffer.Get(), TrianglesOutputBuffer, sizeof(FTriangle) * NumTriangles);
+			AddEnqueueCopyPass(GraphBuilder, CounterReadbackBuffer.Get(), CounterOutputBuffer, sizeof(int32));
+
+			GraphBuilder.Execute();
+			// Loop through TriangleReadback Buffers Map
+
+			ProcessEditShaderReadback(
+				TriangleReadbackBuffer,
+				CounterReadbackBuffer,
+				ChunkComponent,
+				NumTriangles,
+				RequestId);
+
+		});
+	return RequestId;
+}
+
+void ULandmassManagerSubsystem::ProcessEditShaderReadback(
+	TSharedPtr<FRHIGPUBufferReadback> ReadbackBuffer, 
+	TSharedPtr<FRHIGPUBufferReadback> CounterReadbackBuffer,
+	UTerrainChunkComponent& ChunkComponent, 
+	uint32 NumTrianglesPerChunk, 
+	int32 RequestId)
 {
 	FString Value = "ProcessingEditShaderReadback...";
 	PRINT_STRING_ASYNC(Value);
 	ChunkComponent.GetChunkData()->Triangles.Empty();
-	
-	if (ReadbackBuffer)
+
+	if (ReadbackBuffer && CounterReadbackBuffer)
 	{
-		void* Data = ReadbackBuffer->Lock(NumTrianglesPerChunk * sizeof(FTriangle));
+		void* CounterData = CounterReadbackBuffer->Lock(sizeof(int32));
+
+		int32* CounterArray = static_cast<int32*>(CounterData);
+		int32 NumTriangles = CounterArray[0];
+		CounterReadbackBuffer->Unlock();
+		void* Data = ReadbackBuffer->Lock(NumTriangles * sizeof(FTriangle));
 		if (Data)
 		{
 			FTriangle* TriangleData = static_cast<FTriangle*>(Data);
-			for (uint32 i = 0; i < NumTrianglesPerChunk; i++)
+
+			for (int32 i = 0; i < NumTriangles; i++)
 			{
 				ChunkComponent.GetChunkData()->Triangles.Add(TriangleData[i]);
 				/*AsyncTask(ENamedThreads::GameThread, [this, TriangleData, i]()
@@ -269,6 +286,7 @@ void ULandmassManagerSubsystem::ProcessEditShaderReadback(TSharedPtr<FRHIGPUBuff
 				DRAW_POINT_PERM((FVector)TriangleData[i].Vertex3 * 100, FColor::Blue);
 					});*/
 			}
+			//log chunk triangle count
 			ChunkComponent.GetChunkData()->bIsProcessed = true;
 			ReadbackBuffer->Unlock();
 		}

@@ -2,7 +2,8 @@
 
 void FMeshOperation::Execute(
     FRDGBuilder& GraphBuilder, 
-    FRDGBufferRef& TrianglesOutputBuffer, 
+    FRDGBufferRef& TrianglesOutputBuffer,
+	FRDGBufferRef& CounterOutputBuffer,
     const FIntVector& ChunkCoords, 
     uint32 ChunkSize, 
     TSharedPtr<FTerrainChunkData> ChunkData)
@@ -15,7 +16,7 @@ void FMeshOperation::Execute(
 
     // Marching cubes pass - common to all operations
     TrianglesOutputBuffer = CreateEmptyBuffer(GraphBuilder, sizeof(FTriangle), NumTrianglesPerChunk);
-    FRDGBufferRef CounterOutputBuffer = CreateEmptyBuffer(GraphBuilder, sizeof(uint32), 1);
+    CounterOutputBuffer = CreateEmptyBuffer(GraphBuilder, sizeof(uint32), 1);
 
     FRDGBufferUAVRef TrianglesOutputBufferUAV = GraphBuilder.CreateUAV(TrianglesOutputBuffer);
     FRDGBufferUAVRef CounterOutputBufferUAV = GraphBuilder.CreateUAV(CounterOutputBuffer, PF_R32_UINT);

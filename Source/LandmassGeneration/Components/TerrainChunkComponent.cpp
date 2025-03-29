@@ -104,10 +104,6 @@ void UTerrainChunkComponent::EditChunkMesh(const TArray<FTriangle>& Triangles, u
     UE_LOG(LogTemp, Warning, TEXT("Updating mesh with %d triangles length"), Triangles.Num());
     // Start timing the mesh generation
     double StartTime = FPlatformTime::Seconds();
-
-    // Clear the existing mesh
-    Mesh.Clear();
-
     
     // Map to store unique vertices and their indices
     TMap<FVector, int32> UniqueVertices;

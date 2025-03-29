@@ -28,7 +28,7 @@ public:
 		TFunction<void()> Callback);
 
 	int32 RequestTerrainModification(
-		const UTerrainChunkComponent& ChunkComponent,
+		UTerrainChunkComponent& ChunkComponent,
 		TSharedPtr<class FMeshOperation> MeshOperation,
 		TFunction<void()> Callback);
 
@@ -53,7 +53,8 @@ private:
 
 	void ProcessEditShaderReadback(
 		TSharedPtr<FRHIGPUBufferReadback> ReadbackBuffer,
-		const UTerrainChunkComponent& ChunkComponent,
+		TSharedPtr<FRHIGPUBufferReadback> CounterReadbackBuffer,
+		UTerrainChunkComponent& ChunkComponent,
 		uint32 NumTrianglesPerChunk,
 		int32 RequestId);
 
