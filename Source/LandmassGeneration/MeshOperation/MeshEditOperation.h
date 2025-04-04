@@ -13,4 +13,12 @@ public:
 		const FIntVector& ChunkCoords,
 		FRDGBuilder& GraphBuilder,
 		FRDGTextureUAVRef& DensityUAV) override;
+
+	void SetEditParams(const FMeshEditParams& InParams)
+	{
+		EditParams = InParams;
+	}
+
+private:
+	FMeshEditParams EditParams;
 };

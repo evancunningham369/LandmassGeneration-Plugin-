@@ -20,7 +20,7 @@ public:
 
     /** Updates this chunk with the given triangles */
     void UpdateMesh(const TArray<FTriangle>& Triangles, uint32 TriangleCount);
-    void EditChunkMesh(const TArray<FTriangle>& Triangles, uint32 TriangleCount);
+    void EditChunkMesh(const TArray<FTriangle>& Triangles);
 
     /** Get chunk coordinates */
     FIntVector GetChunkCoords() const { return ChunkCoords; }

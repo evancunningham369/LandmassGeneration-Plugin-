@@ -44,19 +44,12 @@ private:
 
 	void ProcessShaderReadback(
 		TSharedPtr<FRHIGPUBufferReadback> ReadbackBuffer,
-		TSharedPtr<FTerrainChunkData> ChunkData,
-		TSharedPtr<int32> ProcessedChunks,
-		const int32& TotalChunks,
-		int32 RequestId,
-		uint32 ElementSize,
-		uint32 NumTrianglesPerChunk);
-
-	void ProcessEditShaderReadback(
-		TSharedPtr<FRHIGPUBufferReadback> ReadbackBuffer,
 		TSharedPtr<FRHIGPUBufferReadback> CounterReadbackBuffer,
-		UTerrainChunkComponent& ChunkComponent,
+		TSharedPtr<FTerrainChunkData> ChunkData,
+		int32 RequestId,
 		uint32 NumTrianglesPerChunk,
-		int32 RequestId);
+		TSharedPtr<int32> ProcessedChunks = nullptr,
+		const int32& TotalChunks = 1);
 
 	TMap<int32, TFunction<void()>> PendingCallbacks;
 

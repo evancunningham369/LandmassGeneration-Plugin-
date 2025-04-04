@@ -3,6 +3,22 @@
 #include <LandmassGeneration/LandmassStructs.h>
 #include "RenderGraphUtils.h"
 
+struct FMeshOperationParams
+{
+	virtual ~FMeshOperationParams() = default;
+};
+
+struct FMeshCreationParams : public FMeshOperationParams
+{
+
+};
+
+struct FMeshEditParams : public FMeshOperationParams
+{
+	FVector DestructionCenter;
+	float DestructionRadius;
+};
+
 class FMeshOperation
 {
 public:

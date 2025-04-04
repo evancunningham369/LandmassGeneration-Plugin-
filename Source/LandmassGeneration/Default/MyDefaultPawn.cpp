@@ -92,7 +92,7 @@ void AMyDefaultPawn::TraceUnderCrosshairs()
 				if (UTerrainGeneratorComponent* TerrainGeneratorComponent = Cast<UTerrainGeneratorComponent>(TerrainChunk->GetAttachParent()))
 				{
 					UE_LOG(LogTemp, Warning, TEXT("Terrain Generator Component Found!"));
-					TerrainGeneratorComponent->UpdateTerrain(*TerrainChunk);
+					TerrainGeneratorComponent->UpdateTerrain(*TerrainChunk, HitResult.Location, 3);
 				}
 			}
 		}

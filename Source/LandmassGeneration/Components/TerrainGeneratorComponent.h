@@ -40,7 +40,7 @@ public:
     /** Generate terrain with the given parameters */
     void GenerateTerrain();
 
-    void UpdateTerrain(UTerrainChunkComponent& ChunkComponent);
+    void UpdateTerrain(UTerrainChunkComponent& ChunkComponent, FVector& HitLocation, float DestructionRadius);
 
     /** Called when compute shader completes */
     void OnComputeShaderComplete();

@@ -59,8 +59,8 @@ void CreateCrater(uint3 ThreadId : SV_DispatchThreadID, uint3 GroupId : SV_Group
     bool IsCrater = (x > 2 && x < 6) && (y > 2 && y < 6) && z > 2;
     bool IsBox = z == 0 || x == 0 || y == 0 || z == 7 || x == 7 || y == 7;
     
-    
-    if (IsCrater)
+    /*
+    if (IsCrater || IsBox)
     {
         DensityMap[ThreadId] = 1.f;
     }
@@ -68,10 +68,10 @@ void CreateCrater(uint3 ThreadId : SV_DispatchThreadID, uint3 GroupId : SV_Group
     {
         DensityMap[ThreadId] = -1.f;
     }
+    */
     
     
-    /*
-    if (distance < DestructionRadius)
+    if (distance < DestructionRadius || IsBox)
     {
         DensityMap[ThreadId] = 1.f;
     }
@@ -87,7 +87,7 @@ void CreateCrater(uint3 ThreadId : SV_DispatchThreadID, uint3 GroupId : SV_Group
             DensityMap[ThreadId] = -1.f;
         }
     }
-    */
+    
 }
 
 // Number of cubes

@@ -98,13 +98,14 @@ void UTerrainChunkComponent::UpdateMesh(const TArray<FTriangle>& Triangles, uint
     
 }
 
-void UTerrainChunkComponent::EditChunkMesh(const TArray<FTriangle>& Triangles, uint32 TriangleCount)
+void UTerrainChunkComponent::EditChunkMesh(const TArray<FTriangle>& Triangles)
 {
-    UE_LOG(LogTemp, Warning, TEXT("Updating mesh with %d triangles"), TriangleCount);
+    Mesh.Clear();
     UE_LOG(LogTemp, Warning, TEXT("Updating mesh with %d triangles length"), Triangles.Num());
     // Start timing the mesh generation
     double StartTime = FPlatformTime::Seconds();
     
+
     // Map to store unique vertices and their indices
     TMap<FVector, int32> UniqueVertices;
 
@@ -120,10 +121,7 @@ void UTerrainChunkComponent::EditChunkMesh(const TArray<FTriangle>& Triangles, u
         FVector Vertex1(Triangle.Vertex1 * VisualizationScale);
         FVector Vertex2(Triangle.Vertex2 * VisualizationScale);
         FVector Vertex3(Triangle.Vertex3 * VisualizationScale);
-        if (Vertex1.Z < .5f || Vertex2.Z < .5f || Vertex3.Z < .5f)
-        {
-            continue;
-        }
+
         // Store unique vertices (no debug visualization for performance)
         if (!UniqueVertices.Contains(Vertex1))
         {

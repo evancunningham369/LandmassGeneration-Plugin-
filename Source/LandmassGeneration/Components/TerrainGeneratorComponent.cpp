@@ -53,16 +53,24 @@ void UTerrainGeneratorComponent::GenerateTerrain()
     //ShaderSubsystem->TestShader(ChunkInfos, ChunkSize);
 }
 
-void UTerrainGeneratorComponent::UpdateTerrain(UTerrainChunkComponent& ChunkComponent)
+void UTerrainGeneratorComponent::UpdateTerrain(UTerrainChunkComponent& ChunkComponent, FVector& HitLocation, float DestructionRadius)
 {
 	if (!ShaderSubsystem)
 	{
 		ShaderSubsystem = GetWorld()->GetSubsystem<ULandmassManagerSubsystem>();
 	}
 
-	TSharedPtr<FMeshOperation> MeshOperation;
+	TSharedPtr<FMeshEditOperation> MeshOperation = MakeShared<FMeshEditOperation>();
+	FVector ScaledHitLocation = HitLocation / 80;
+    // Debug location
+	UE_LOG(LogTemp, Warning, TEXT("Scaled Hit Location: %s"), *ScaledHitLocation.ToString());
+	DRAW_POINT_PERM(HitLocation, FColor::Red);
 
-	MeshOperation = MakeShared<FMeshEditOperation>();
+	FMeshEditParams EditParams;
+	EditParams.DestructionCenter = HitLocation;
+	EditParams.DestructionRadius = DestructionRadius;
+
+	MeshOperation->SetEditParams(EditParams);
 
 	ShaderSubsystem->RequestTerrainModification(
 		ChunkComponent,
@@ -80,9 +88,7 @@ void UTerrainGeneratorComponent::OnEditComputeShaderComplete(UTerrainChunkCompon
     UE_LOG(LogTemp, Warning, TEXT("Triangle Count: %d"), TerrainChunk.GetChunkData()->TriangleCount);
 	FTerrainChunkDataPtr ChunkData = TerrainChunk.GetChunkData();
 
-    TerrainChunk.EditChunkMesh(
-    ChunkData->Triangles,
-    ChunkData->TriangleCount);
+    TerrainChunk.EditChunkMesh(ChunkData->Triangles);
 }
 
 void UTerrainGeneratorComponent::CreateChunks()
