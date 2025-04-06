@@ -148,6 +148,8 @@ void UTerrainChunkComponent::EditChunkMesh(const TArray<FTriangle>& Triangles)
     FColor RandomColor = FColor::MakeRandomColor();
     //Iterate over Mesh vertices
     UE_LOG(LogTemp, Warning, TEXT("MAX VERTEX ID: %d"), Mesh.MaxVertexID());
+    /*
+	* DEBUG VISUALIZATION
     for (int32 VertexIndex = 0; VertexIndex < Mesh.MaxVertexID(); VertexIndex++)
     {
         // Get the vertex position
@@ -155,7 +157,7 @@ void UTerrainChunkComponent::EditChunkMesh(const TArray<FTriangle>& Triangles)
         DRAW_POINT_PERM(VertexPosition, RandomColor);
         //UE_LOG(LogTemp, Warning, TEXT("Vertex Index: %d, Vertex Position: %s"), VertexIndex ,*VertexPosition.ToString());
     }
-    
+    */
 
     // Calculate normals for proper lighting/shading
     FMeshNormals::QuickComputeVertexNormals(Mesh);

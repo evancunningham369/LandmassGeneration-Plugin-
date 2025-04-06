@@ -59,6 +59,7 @@ protected:
     };
 
     virtual void AddDensityShaderPass(
+        TSharedPtr<FTerrainChunkData> ChunkData,
         const uint32& ChunkSize,
         const FIntVector& ChunkCoords,
         FRDGBuilder& GraphBuilder,

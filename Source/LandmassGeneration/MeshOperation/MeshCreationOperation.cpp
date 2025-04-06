@@ -1,6 +1,7 @@
 #include "MeshCreationOperation.h"
 
 void FMeshCreationOperation::AddDensityShaderPass(
+	TSharedPtr<FTerrainChunkData> ChunkData,
 	const uint32& ChunkSize,
 	const FIntVector& ChunkCoords,
 	FRDGBuilder& GraphBuilder,
@@ -11,14 +12,29 @@ void FMeshCreationOperation::AddDensityShaderPass(
 	// Use RDG for GPU resource management
 	// Create GPU Buffer
 
-	FRDGTextureRef DensityBuffer = CreateTextureBuffer(
-		GraphBuilder,
-		ChunkSize,
-		TEXT("Density Data Buffer")
-	);
+	if (!ChunkData->DensityMap)
+	{
+		FRHITextureCreateDesc TextureDesc = FRHITextureCreateDesc::Create3D(
+			TEXT("Density Texture"),
+			FIntVector(ChunkSize, ChunkSize, ChunkSize),
+			PF_R32_FLOAT
+		);
 
-	// Create an UAV Buffer to enable RW on GPU Buffer
-	DensityUAV = GraphBuilder.CreateUAV(FRDGTextureUAVDesc(DensityBuffer));
+		TextureDesc.SetFlags(ETextureCreateFlags::ShaderResource | ETextureCreateFlags::UAV);
+
+		ChunkData->DensityMap = RHICreateTexture(
+			TextureDesc
+		);
+	}
+
+	FRDGTextureRef DensityTextureRDG = GraphBuilder.RegisterExternalTexture(
+		CreateRenderTarget(
+			ChunkData->DensityMap,
+			TEXT("Density Texture")
+			));
+
+	DensityUAV = GraphBuilder.CreateUAV(FRDGTextureUAVDesc(DensityTextureRDG));
+	
 
 	// Allocate parameters
 	FDensityComputeShader::FParameters* DensityParams = GraphBuilder.AllocParameters<FDensityComputeShader::FParameters>();

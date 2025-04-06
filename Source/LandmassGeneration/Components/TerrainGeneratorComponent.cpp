@@ -61,13 +61,12 @@ void UTerrainGeneratorComponent::UpdateTerrain(UTerrainChunkComponent& ChunkComp
 	}
 
 	TSharedPtr<FMeshEditOperation> MeshOperation = MakeShared<FMeshEditOperation>();
-	FVector ScaledHitLocation = HitLocation / 80;
+	FVector ScaledHitLocation = HitLocation / 100;
     // Debug location
-	UE_LOG(LogTemp, Warning, TEXT("Scaled Hit Location: %s"), *ScaledHitLocation.ToString());
-	DRAW_POINT_PERM(HitLocation, FColor::Red);
+	UE_LOG(LogTemp, Warning, TEXT("Hit Location: %s"), *ScaledHitLocation.ToString());
 
 	FMeshEditParams EditParams;
-	EditParams.DestructionCenter = HitLocation;
+	EditParams.DestructionCenter = ScaledHitLocation;
 	EditParams.DestructionRadius = DestructionRadius;
 
 	MeshOperation->SetEditParams(EditParams);

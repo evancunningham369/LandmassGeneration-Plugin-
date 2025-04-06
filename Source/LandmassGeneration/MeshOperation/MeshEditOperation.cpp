@@ -1,6 +1,7 @@
 #include "MeshEditOperation.h"
 
 void FMeshEditOperation::AddDensityShaderPass(
+	TSharedPtr<FTerrainChunkData> ChunkData,
 	const uint32& ChunkSize, 
 	const FIntVector& ChunkCoords, 
 	FRDGBuilder& GraphBuilder, 
@@ -9,14 +10,18 @@ void FMeshEditOperation::AddDensityShaderPass(
 	TShaderMapRef<FEditDensityComputeShader> EditDensityShader(GetGlobalShaderMap(GMaxRHIFeatureLevel));
 	uint32 TotalVertices = ChunkSize * ChunkSize * ChunkSize;
 	// Use RDG for GPU resource management
-	// Create GPU Buffer
-	FRDGTextureRef DensityBuffer = CreateTextureBuffer(
-		GraphBuilder,
-		ChunkSize,
-		TEXT("Density Data Buffer")
-	);
+
+	FRDGTextureRef DensityTextureRDG = GraphBuilder.RegisterExternalTexture(
+		CreateRenderTarget(
+			ChunkData->DensityMap,
+			TEXT("Density Texture")
+		));
+
+	FVector3f TestDestructionCenter = FVector3f(ChunkSize / 2, 0, ChunkSize / 2);
+
+	
 	// Create an UAV Buffer to enable RW on GPU Buffer
-	DensityUAV = GraphBuilder.CreateUAV(FRDGTextureUAVDesc(DensityBuffer));
+	DensityUAV = GraphBuilder.CreateUAV(FRDGTextureUAVDesc(DensityTextureRDG));
 	// Allocate parameters
 	FEditDensityComputeShader::FParameters* EditDensityParams = GraphBuilder.AllocParameters<FEditDensityComputeShader::FParameters>();
 	EditDensityParams->DensityMap = DensityUAV;

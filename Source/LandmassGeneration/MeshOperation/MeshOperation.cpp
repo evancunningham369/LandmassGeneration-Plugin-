@@ -12,7 +12,8 @@ void FMeshOperation::Execute(
 
     // Call the strategy-specific density shader pass
     FRDGTextureUAVRef DensityUAV;
-    AddDensityShaderPass(ChunkSize, ChunkCoords, GraphBuilder, DensityUAV);
+
+    AddDensityShaderPass(ChunkData, ChunkSize, ChunkCoords, GraphBuilder, DensityUAV);
 
     // Marching cubes pass - common to all operations
     TrianglesOutputBuffer = CreateEmptyBuffer(GraphBuilder, sizeof(FTriangle), NumTrianglesPerChunk);

@@ -11,6 +11,8 @@ struct FTerrainChunkData
     TArray<FTriangle> Triangles;
     int32 TriangleCount = 0;
     bool bIsProcessed = false;
+
+    FTextureRHIRef DensityMap;
 };
 
 typedef TSharedPtr<FTerrainChunkData> FTerrainChunkDataPtr;
