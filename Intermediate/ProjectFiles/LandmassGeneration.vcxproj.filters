@@ -32,6 +32,9 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{ECEE0A84-AF1B-3E31-98AE-C4CE303FAD9D}</UniqueIdentifier>
     </Filter>
+    <None Include="..\..\Shaders\GrassComputeShader.usf">
+      <Filter>Shaders</Filter>
+    </None>
     <None Include="..\..\Shaders\LandmassComputeShader.usf">
       <Filter>Shaders</Filter>
     </None>
@@ -68,6 +71,12 @@
     <Filter Include="Source\LandmassGeneration\Components">
       <UniqueIdentifier>{3328E09F-56B2-3278-92FC-953DDA3FED0A}</UniqueIdentifier>
     </Filter>
+    <ClCompile Include="..\..\Source\LandmassGeneration\Components\GrassGeneratorComponent.cpp">
+      <Filter>Source\LandmassGeneration\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\LandmassGeneration\Components\GrassGeneratorComponent.h">
+      <Filter>Source\LandmassGeneration\Components</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\LandmassGeneration\Components\TerrainChunkComponent.cpp">
       <Filter>Source\LandmassGeneration\Components</Filter>
     </ClCompile>
@@ -131,9 +140,24 @@
     <ClCompile Include="..\..\Source\LandmassGeneration\MeshOperation\MeshOperation.h">
       <Filter>Source\LandmassGeneration\MeshOperation</Filter>
     </ClCompile>
+    <Filter Include="Source\LandmassGeneration\Rendering">
+      <UniqueIdentifier>{A7057511-038C-39DE-AEDB-C88AA8D9D6E8}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\LandmassGeneration\Rendering\GrassRenderer.cpp">
+      <Filter>Source\LandmassGeneration\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\LandmassGeneration\Rendering\GrassRenderer.h">
+      <Filter>Source\LandmassGeneration\Rendering</Filter>
+    </ClCompile>
     <Filter Include="Source\LandmassGeneration\Shaders">
       <UniqueIdentifier>{05467C82-B4C8-394E-9D4A-A2B123D4C4AF}</UniqueIdentifier>
     </Filter>
+    <ClCompile Include="..\..\Source\LandmassGeneration\Shaders\GrassComputeShader.cpp">
+      <Filter>Source\LandmassGeneration\Shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\LandmassGeneration\Shaders\GrassComputeShader.h">
+      <Filter>Source\LandmassGeneration\Shaders</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\LandmassGeneration\Shaders\LandmassComputeShader.cpp">
       <Filter>Source\LandmassGeneration\Shaders</Filter>
     </ClCompile>

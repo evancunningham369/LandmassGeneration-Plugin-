@@ -15,6 +15,8 @@ class LANDMASSGENERATION_API ALandmass : public AActor
 public:
     ALandmass();
     class UTerrainGeneratorComponent* TerrainGeneratorComponent;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+    class UGrassGeneratorComponent* GrassGeneratorComponent;
 
     // Maximum number of triangles to generate
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain Generation", meta = (ClampMin = "10000", ClampMax = "5000000"))
@@ -27,9 +29,15 @@ public:
     UPROPERTY(EditAnywhere, Category = "Terrain Generation")
     bool bIsEdit = false;
 
+    UPROPERTY(EditAnywhere, Category = "Grass")
+    bool bEnableGrass = true;
+
     // Regenerate terrain
     UFUNCTION(BlueprintCallable, Category = "Terrain Generation")
     void RegenerateTerrain();
+
+    UFUNCTION(BlueprintCallable, Category = "Grass")
+    void RegenerateGrass();
 
 protected:
     virtual void BeginPlay() override;

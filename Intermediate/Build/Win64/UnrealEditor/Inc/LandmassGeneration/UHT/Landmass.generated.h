@@ -15,6 +15,7 @@ PRAGMA_DISABLE_DEPRECATION_WARNINGS
 #define LANDMASSGENERATION_Landmass_generated_h
 
 #define FID_Users_donut_Documents_LandmassGenerationUnreal_LandmassGeneration_Source_LandmassGeneration_Landmass_Landmass_h_13_RPC_WRAPPERS_NO_PURE_DECLS \
+	DECLARE_FUNCTION(execRegenerateGrass); \
 	DECLARE_FUNCTION(execRegenerateTerrain);
 
 

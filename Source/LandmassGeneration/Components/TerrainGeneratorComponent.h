@@ -47,6 +47,8 @@ public:
 
 	void OnEditComputeShaderComplete(UTerrainChunkComponent& TerrainChunk);
 
+    void GetTerrainChunks(TArray<UTerrainChunkComponent*>& OutChunks) const;
+
 	bool bIsEdit = false;
 
     /** The maximum number of triangles to generate */

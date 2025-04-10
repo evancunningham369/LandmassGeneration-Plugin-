@@ -4,6 +4,7 @@
 #include "Landmass.h"
 #include "LandmassGeneration/DebugMacros.h"
 #include <LandmassGeneration/Components/TerrainGeneratorComponent.h>
+#include <LandmassGeneration/Components/GrassGeneratorComponent.h>
 
 ALandmass::ALandmass()
 {
@@ -16,6 +17,9 @@ ALandmass::ALandmass()
     // Create the terrain generator component
     TerrainGeneratorComponent = CreateDefaultSubobject<UTerrainGeneratorComponent>(TEXT("Terrain Generator Component"));
     TerrainGeneratorComponent->SetupAttachment(SceneRoot);
+
+    GrassGeneratorComponent = CreateDefaultSubobject<UGrassGeneratorComponent>(TEXT("Grass Generator Component"));
+    GrassGeneratorComponent->SetupAttachment(SceneRoot);
 }
 
 void ALandmass::BeginPlay()
@@ -23,6 +27,19 @@ void ALandmass::BeginPlay()
     Super::BeginPlay();
     
     RegenerateTerrain();
+
+    // Generate grass after terrain is created
+    if (bEnableGrass && GrassGeneratorComponent)
+    {
+        // We'll defer grass generation slightly to ensure terrain is fully generated
+        FTimerHandle TimerHandle;
+        GetWorldTimerManager().SetTimer(
+            TimerHandle,
+            [this]() { RegenerateGrass(); },
+            0.5f,
+            false
+        );
+    }
 }
 
 void ALandmass::OnConstruction(const FTransform& Transform)
@@ -36,6 +53,11 @@ void ALandmass::OnConstruction(const FTransform& Transform)
         TerrainGeneratorComponent->bEnableDebugVisualization = bEnableDebugVisualization;
 		TerrainGeneratorComponent->bIsEdit = bIsEdit;
     }
+
+    if (GrassGeneratorComponent)
+    {
+        GrassGeneratorComponent->SetVisibility(bEnableGrass);
+    }
 }
 
 void ALandmass::RegenerateTerrain()
@@ -43,6 +65,14 @@ void ALandmass::RegenerateTerrain()
     if (TerrainGeneratorComponent)
     {
         TerrainGeneratorComponent->GenerateTerrain();
+    }
+}
+
+void ALandmass::RegenerateGrass()
+{
+    if (bEnableGrass && GrassGeneratorComponent)
+    {
+
     }
 }
 

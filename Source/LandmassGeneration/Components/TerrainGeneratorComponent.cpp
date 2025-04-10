@@ -90,6 +90,18 @@ void UTerrainGeneratorComponent::OnEditComputeShaderComplete(UTerrainChunkCompon
     TerrainChunk.EditChunkMesh(ChunkData->Triangles);
 }
 
+void UTerrainGeneratorComponent::GetTerrainChunks(TArray<UTerrainChunkComponent*>& OutChunks) const
+{
+    OutChunks.Empty();
+    for (const FTerrainChunkInfo& ChunkInfo : ChunkInfos)
+    {
+        if (ChunkInfo.ChunkComponent)
+        {
+            OutChunks.Add(ChunkInfo.ChunkComponent);
+        }
+    }
+}
+
 void UTerrainGeneratorComponent::CreateChunks()
 {
     // Clear existing chunks
