@@ -116,17 +116,15 @@ void USimpleTriangleComponent::DrawGrassInstances()
 				
 					
 					FGraphicsPipelineStateInitializer GraphicsPSOInit;
+					InRHICmdList.ApplyCachedRenderTargets(GraphicsPSOInit);
 
 					GraphicsPSOInit.BlendState = TStaticBlendState<>::GetRHI();
-					GraphicsPSOInit.RasterizerState = TStaticRasterizerState<>::GetRHI();
+					GraphicsPSOInit.RasterizerState = TStaticRasterizerState<FM_Solid, CM_None>::GetRHI();
 					GraphicsPSOInit.DepthStencilState = TStaticDepthStencilState<false, CF_Always>::GetRHI();
 					GraphicsPSOInit.BoundShaderState.VertexDeclarationRHI = VertexDeclarationRHI;
 					GraphicsPSOInit.BoundShaderState.VertexShaderRHI = VertexShader.GetVertexShader();
 					GraphicsPSOInit.BoundShaderState.PixelShaderRHI = PixelShader.GetPixelShader();
 					GraphicsPSOInit.PrimitiveType = PT_TriangleList;
-					GraphicsPSOInit.RenderTargetFormats[0] = ViewportRT_RHI->GetDesc().Format;
-					GraphicsPSOInit.RenderTargetFlags[0] = ViewportRT_RHI->GetDesc().Flags;
-					GraphicsPSOInit.RenderTargetsEnabled = 1;
 
 					SetGraphicsPipelineState(InRHICmdList, GraphicsPSOInit, 0);
 					
