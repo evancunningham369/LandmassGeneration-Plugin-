@@ -1,8 +1,8 @@
 #pragma once
-#include "/Engine/Private/Common.h"
+#include "/Engine/Public/Platform.ush"
 
 [numthreads(8, 8, 1)]
-void main( uint3 ThreadID : SV_DispatchThreadID )
+void PlaceGrass( uint3 ThreadID : SV_DispatchThreadID )
 {
     
 }

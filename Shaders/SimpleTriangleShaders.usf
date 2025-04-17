@@ -1,0 +1,60 @@
+#pragma once
+
+// Include common engine shader utilities if needed
+#include "/Engine/Public/Platform.ush" // Provides basic types and platform info
+#include "/Engine/Private/Common.ush"   // Common functions like TransformWorldToClip
+
+// SimpleTriangleShaders.usf
+
+// Define shader parameters
+struct FSimpleTriangleVS
+{
+    float4x4 ViewProjectionMatrix;
+};
+
+struct FSimpleTrianglePS
+{
+    float4 Color;
+};
+
+// Declare parameter buffers
+ConstantBuffer<FSimpleTriangleVS> VSParams;
+ConstantBuffer<FSimpleTrianglePS> PSParams;
+
+// Vertex shader input structure
+struct FVertexInput
+{
+    float3 Position : ATTRIBUTE0;
+    float4 Color : ATTRIBUTE1;
+};
+
+// Vertex shader output / pixel shader input
+struct FVertexOutput
+{
+    float4 Position : SV_POSITION;
+    float4 Color : COLOR0;
+};
+
+// Vertex shader
+FVertexOutput MainVS(FVertexInput Input)
+{
+    FVertexOutput Output;
+    
+    // Transform position from local space to clip space
+    // Or if you want to apply a transformation:
+    //Output.Position = mul(float4(Input.Position, 1.0f), VSParams.ViewProjectionMatrix);
+    Output.Position = float4(Input.Position.x * 0.01, Input.Position.y * 0.01, 0.5, 1.0);
+    // Pass the color to the pixel shader
+    Output.Color = Input.Color;
+    
+    return Output;
+}
+
+// Pixel shader
+float4 MainPS(FVertexOutput Input) : SV_Target0
+{
+    // Mix the vertex color with the parameter color
+    //float4 FinalColor = Input.Color * PSParams.Color;
+    float4 FinalColor =  float4(1.0, 0.0, 1.0, 1.0);
+    return FinalColor;
+}
